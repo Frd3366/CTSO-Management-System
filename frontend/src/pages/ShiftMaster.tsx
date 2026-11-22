@@ -15,6 +15,7 @@ import {
   Layers,
   ArrowRight
 } from 'lucide-react';
+import { ModernTimePicker } from '../components/common/ModernTimePicker';
 
 export const ShiftMaster: React.FC = () => {
   const { shifts, addShift, updateShift, deleteShift, currentUser } = useAuth();
@@ -262,26 +263,18 @@ export const ShiftMaster: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Jam Mulai (WITA)</label>
-              <input
-                type="time"
-                value={formStartTime}
-                onChange={(e) => setFormStartTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-mono text-slate-900 dark:text-white"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Jam Selesai (WITA)</label>
-              <input
-                type="time"
-                value={formEndTime}
-                onChange={(e) => setFormEndTime(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-mono text-slate-900 dark:text-white"
-                required
-              />
-            </div>
+            <ModernTimePicker
+              label="Jam Mulai (WITA)"
+              value={formStartTime}
+              onChange={setFormStartTime}
+              required
+            />
+            <ModernTimePicker
+              label="Jam Selesai (WITA)"
+              value={formEndTime}
+              onChange={setFormEndTime}
+              required
+            />
           </div>
 
           <div>

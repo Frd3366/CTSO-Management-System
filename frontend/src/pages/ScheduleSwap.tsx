@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Modal } from '../components/common/Modal';
+import { ModernDatePicker } from '../components/common/ModernDatePicker';
 import { RequestType, RequestStatus, WorkLocation } from '../types';
 import {
   ArrowLeftRight,
@@ -531,16 +532,12 @@ export const ScheduleSwap: React.FC = () => {
               </select>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal Roster</label>
-              <input
-                type="date"
-                value={workDate}
-                onChange={(e) => setWorkDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                required
-              />
-            </div>
+            <ModernDatePicker
+              label="Tanggal Roster"
+              value={workDate}
+              onChange={setWorkDate}
+              required
+            />
           </div>
 
           {/* Current Assignment Preview */}

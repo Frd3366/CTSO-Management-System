@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { GoogleSheetsBackupModal } from '../components/common/GoogleSheetsBackupModal';
 import { getGoogleSheetsConfig, GoogleSheetsBackupConfig } from '../utils/googleSheetsBackup';
+import { ModernDatePicker } from '../components/common/ModernDatePicker';
 import {
   FileText,
   Download,
@@ -139,6 +140,21 @@ export const Reports: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          {canManage && (
+            <button
+              type="button"
+              onClick={() => setIsGSheetsModalOpen(true)}
+              className="px-3.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+              title="Konfigurasi Auto Backup Google Sheets"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <span>Auto Backup Sheets</span>
+              {gsheetsConfig.enabled && (
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              )}
+            </button>
+          )}
+
           <button
             type="button"
             onClick={handlePrint}
@@ -223,36 +239,27 @@ export const Reports: React.FC = () => {
               </select>
             </div>
           ) : (
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Tanggal Acuan</label>
-              <input
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:outline-none focus:border-[#F9C900]"
-              />
-            </div>
+            <ModernDatePicker
+              label="Tanggal Acuan"
+              value={selectedDate}
+              onChange={setSelectedDate}
+              showQuickChips={true}
+            />
           )}
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Dari Tanggal</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:outline-none focus:border-[#F9C900]"
-            />
-          </div>
+          <ModernDatePicker
+            label="Dari Tanggal"
+            value={startDate}
+            onChange={setStartDate}
+            showQuickChips={false}
+          />
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Sampai Tanggal</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-white/5 text-slate-900 dark:text-white focus:outline-none focus:border-[#F9C900]"
-            />
-          </div>
+          <ModernDatePicker
+            label="Sampai Tanggal"
+            value={endDate}
+            onChange={setEndDate}
+            showQuickChips={false}
+          />
         </div>
 
         <div className="pt-2 flex justify-end">

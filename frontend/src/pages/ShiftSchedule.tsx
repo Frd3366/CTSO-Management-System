@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Modal } from '../components/common/Modal';
+import { ModernDatePicker } from '../components/common/ModernDatePicker';
 import { GoogleSheetsBackupModal } from '../components/common/GoogleSheetsBackupModal';
 import { getGoogleSheetsConfig, GoogleSheetsBackupConfig } from '../utils/googleSheetsBackup';
 import { ScheduleAssignment, WorkLocation } from '../types';
@@ -269,7 +270,7 @@ export const ShiftSchedule: React.FC = () => {
     setFormShiftCode('Pagi 7');
     setFormJobdeskCode('');
     setFormLocation('Badung');
-    setFormStatus('Draft');
+    setFormStatus('Published');
     setFormNote('');
     setIsManualModalOpen(true);
   };
@@ -286,12 +287,12 @@ export const ShiftSchedule: React.FC = () => {
     setFormShiftCode(assignment.shiftCode);
     setFormJobdeskCode(assignment.jobdeskCode || '');
     setFormLocation(assignment.location || 'Badung');
-    setFormStatus(assignment.publicationStatus);
+    setFormStatus('Published');
     setFormNote(assignment.note || '');
     setIsManualModalOpen(true);
   };
 
-  // Save Assignment
+  // Save Assignment (Directly Published, no draft)
   const handleSaveManual = (e: React.FormEvent) => {
     e.preventDefault();
     const emp = employees.find((e) => e.id === formEmployeeId);
@@ -312,7 +313,7 @@ export const ShiftSchedule: React.FC = () => {
         shiftCode: formShiftCode,
         jobdeskCode: isOff ? undefined : (formJobdeskCode || undefined),
         location: isOff ? undefined : formLocation,
-        publicationStatus: formStatus,
+        publicationStatus: 'Published',
         note: formNote.trim() || undefined
       });
 
@@ -320,7 +321,7 @@ export const ShiftSchedule: React.FC = () => {
         showToast(res.error || 'Gagal menyimpan perubahan.', 'error');
         return;
       }
-      showToast('Perubahan jadwal dan peran tugas berhasil disimpan.', 'success');
+      showToast('Perubahan jadwal dan peran tugas berhasil disimpan (Published).', 'success');
     } else {
       const res = addSchedule({
         employeeId: emp.id,
@@ -330,7 +331,7 @@ export const ShiftSchedule: React.FC = () => {
         shiftCode: formShiftCode,
         jobdeskCode: isOff ? undefined : (formJobdeskCode || undefined),
         location: isOff ? undefined : formLocation,
-        publicationStatus: formStatus,
+        publicationStatus: 'Published',
         note: formNote.trim() || undefined
       });
 
@@ -338,7 +339,7 @@ export const ShiftSchedule: React.FC = () => {
         showToast(res.error || 'Validasi jadwal gagal.', 'error');
         return;
       }
-      showToast('Assignment jadwal baru berhasil ditambahkan.', 'success');
+      showToast('Assignment jadwal baru berhasil ditambahkan (Published).', 'success');
     }
 
     setIsManualModalOpen(false);
@@ -460,25 +461,56 @@ export const ShiftSchedule: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-2">
           {canManageSchedule && (
-            <button
-              type="button"
-              onClick={handleExportCSV}
-              className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
-            >
-              <Download className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" aria-hidden="true" />
-              <span>Export CSV</span>
-            </button>
-          )}
+            <>
+              <button
+                type="button"
+                onClick={() => {
+                  setBulkStartDate(getTodayIso());
+                  setBulkEndDate(getWeekAheadIso(7));
+                  setBulkEmployeeIds([]);
+                  setIsBulkModalOpen(true);
+                }}
+                className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-[#202020] hover:bg-[#FFE160]/20 text-[#202020] dark:text-gray-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                title="Bulk Shift Assignment untuk banyak karyawan sekaligus"
+              >
+                <Layers className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" aria-hidden="true" />
+                <span>Bulk Update</span>
+              </button>
 
-          {canManageSchedule && (
-            <button
-              type="button"
-              onClick={() => handleOpenAdd()}
-              className="px-4 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] text-[#111111] border border-[#E5B800] text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 text-[#111111]" aria-hidden="true" />
-              <span>Add Assignment</span>
-            </button>
+              <button
+                type="button"
+                onClick={() => setIsGSheetsModalOpen(true)}
+                className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-white dark:bg-[#202020] hover:bg-[#FFE160]/20 text-[#202020] dark:text-gray-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+                title="Auto Backup Roster ke Google Sheets (Setiap 1 Jam)"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" aria-hidden="true" />
+                <span>Auto Backup Sheets</span>
+                {gsheetsConfig.enabled && (
+                  <span
+                    className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#202020]"
+                    title="Auto Backup Aktif"
+                  />
+                )}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleExportCSV}
+                className="px-3.5 py-2 rounded-xl border border-slate-300 dark:border-white/20 bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-[#202020] dark:text-gray-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs cursor-pointer"
+              >
+                <Download className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" aria-hidden="true" />
+                <span>Export CSV</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleOpenAdd()}
+                className="px-4 py-2 rounded-xl bg-[#FFD416] hover:bg-[#FFE160] text-[#202020] border border-[#FFD416] text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5 text-[#202020]" aria-hidden="true" />
+                <span>Add Assignment</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -528,26 +560,36 @@ export const ShiftSchedule: React.FC = () => {
             type="button"
             aria-label="Periode sebelumnya"
             onClick={() => handleNavigateDate('prev')}
-            className="p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-gray-300"
+            className="p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-[#FFE160]/20 text-[#202020] dark:text-gray-300 transition-colors cursor-pointer"
           >
             <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           </button>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 text-xs font-bold text-[#0F172A] dark:text-white font-mono">
-            <CalendarIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
-            <span>
-              {viewMode === 'daily' && formatDateDMY(currentDateStr)}
-              {viewMode === 'weekly' && `${formatDateDMY(weeklyDays[0]?.iso)} – ${formatDateDMY(weeklyDays[6]?.iso)}`}
-              {viewMode === 'monthly' &&
-                currentAnchorDate.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}
-            </span>
-          </div>
+          {viewMode === 'daily' ? (
+            <div className="min-w-[190px]">
+              <ModernDatePicker
+                value={currentDateStr}
+                onChange={(d) => setCurrentDateStr(d)}
+                showQuickPresets={true}
+                className="w-auto"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202020] text-xs font-bold text-[#202020] dark:text-white font-mono shadow-2xs">
+              <CalendarIcon className="w-3.5 h-3.5 text-[#FFD416]" aria-hidden="true" />
+              <span>
+                {viewMode === 'weekly' && `${formatDateDMY(weeklyDays[0]?.iso)} – ${formatDateDMY(weeklyDays[6]?.iso)}`}
+                {viewMode === 'monthly' &&
+                  currentAnchorDate.toLocaleString('id-ID', { month: 'long', year: 'numeric' })}
+              </span>
+            </div>
+          )}
 
           <button
             type="button"
             aria-label="Periode berikutnya"
             onClick={() => handleNavigateDate('next')}
-            className="p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-gray-300"
+            className="p-2 rounded-xl border border-slate-200 dark:border-white/10 hover:bg-[#FFE160]/20 text-[#202020] dark:text-gray-300 transition-colors cursor-pointer"
           >
             <ChevronRight className="w-4 h-4" aria-hidden="true" />
           </button>
@@ -555,7 +597,7 @@ export const ShiftSchedule: React.FC = () => {
           <button
             type="button"
             onClick={() => setCurrentDateStr(getTodayIso())}
-            className="px-3 py-1.5 text-xs font-bold rounded-xl border border-slate-200 dark:border-white/10 text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5"
+            className="px-3 py-2 text-xs font-bold rounded-xl border border-slate-200 dark:border-white/10 text-[#202020] dark:text-gray-300 hover:bg-[#FFD416] hover:text-[#202020] transition-colors cursor-pointer"
           >
             Today
           </button>
@@ -1056,26 +1098,24 @@ export const ShiftSchedule: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1">Tanggal Tugas</label>
-              <input
-                type="date"
+              <ModernDatePicker
                 value={formDate}
-                onChange={(e) => setFormDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white bg-white dark:bg-[#202023] focus:outline-none focus:border-[#F9C900] [color-scheme:light_dark]"
+                onChange={(d) => setFormDate(d)}
+                label="Tanggal Tugas"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1">Kode Shift</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1.5">Kode Shift</label>
               <select
                 value={formShiftCode}
                 onChange={(e) => setFormShiftCode(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white bg-white dark:bg-[#202023] focus:outline-none focus:border-[#F9C900]"
+                className="w-full px-3 py-2.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white bg-white dark:bg-[#202020] focus:outline-none focus:border-[#FFD416]"
                 required
               >
                 {shifts.map((s) => (
-                  <option key={s.id} value={s.code} className="bg-white dark:bg-[#202023] text-slate-800 dark:text-white">
+                  <option key={s.id} value={s.code} className="bg-white dark:bg-[#202020] text-slate-800 dark:text-white">
                     {s.name} ({s.code})
                   </option>
                 ))}
@@ -1084,7 +1124,7 @@ export const ShiftSchedule: React.FC = () => {
           </div>
 
           {formShiftCode !== 'OFF' && (
-            <div className="grid grid-cols-2 gap-3 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200/60 dark:border-white/10">
+            <div className="grid grid-cols-2 gap-3 p-3 bg-[#F4F4F4] dark:bg-white/5 rounded-xl border border-slate-200/60 dark:border-white/10">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1">
                   Peran / Jobdesk Roster
@@ -1092,13 +1132,13 @@ export const ShiftSchedule: React.FC = () => {
                 <select
                   value={formJobdeskCode}
                   onChange={(e) => setFormJobdeskCode(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white bg-white dark:bg-[#202023] focus:outline-none focus:border-[#F9C900]"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white bg-white dark:bg-[#202020] focus:outline-none focus:border-[#FFD416]"
                 >
-                  <option value="" className="bg-white dark:bg-[#202023] text-slate-500">
+                  <option value="" className="bg-white dark:bg-[#202020] text-slate-500">
                     -- Tanpa Jobdesk --
                   </option>
                   {jobdesks.map((j) => (
-                    <option key={j.id} value={j.code} className="bg-white dark:bg-[#202023] text-slate-800 dark:text-white">
+                    <option key={j.id} value={j.code} className="bg-white dark:bg-[#202020] text-slate-800 dark:text-white">
                       {j.code} - {j.name}
                     </option>
                   ))}
@@ -1112,7 +1152,7 @@ export const ShiftSchedule: React.FC = () => {
                 <select
                   value={formLocation}
                   onChange={(e) => setFormLocation(e.target.value as WorkLocation)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white bg-white dark:bg-[#202023] focus:outline-none focus:border-[#F9C900]"
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-800 dark:text-white bg-white dark:bg-[#202020] focus:outline-none focus:border-[#FFD416]"
                 >
                   <option value="Badung">Badung</option>
                   <option value="Bangli">Bangli</option>
@@ -1128,32 +1168,17 @@ export const ShiftSchedule: React.FC = () => {
             </div>
           )}
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1">Status Publikasi</label>
-            <div className="flex items-center gap-3">
-              <label className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-gray-200 cursor-pointer">
-                <input
-                  type="radio"
-                  name="formStatus"
-                  value="Draft"
-                  checked={formStatus === 'Draft'}
-                  onChange={() => setFormStatus('Draft')}
-                  className="text-[#F9C900] focus:ring-[#F9C900]"
-                />
-                <span>Draft (Hanya Admin & SPV)</span>
-              </label>
-              <label className="flex items-center gap-1.5 text-xs text-slate-700 dark:text-gray-200 cursor-pointer">
-                <input
-                  type="radio"
-                  name="formStatus"
-                  value="Published"
-                  checked={formStatus === 'Published'}
-                  onChange={() => setFormStatus('Published')}
-                  className="text-[#F9C900] focus:ring-[#F9C900]"
-                />
-                <span>Published (Terbuka untuk Employee)</span>
-              </label>
+          {/* Direct Published Indicator (No draft) */}
+          <div className="p-3 rounded-xl bg-emerald-50/80 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+              <span className="text-xs font-bold text-emerald-950 dark:text-emerald-200">
+                Publikasi Langsung (Published)
+              </span>
             </div>
+            <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-white dark:bg-emerald-900/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-700/50">
+              Otomatis Resmi
+            </span>
           </div>
 
           {/* Note Input (PRD Note on Block) */}
@@ -1170,7 +1195,7 @@ export const ShiftSchedule: React.FC = () => {
               onChange={(e) => setFormNote(e.target.value)}
               rows={2}
               placeholder="Catatan serah terima, instruksi shift, catatan khusus..."
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#111111] text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-amber-500/20 resize-none"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202020] text-xs text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#FFD416]/30 resize-none"
             />
           </div>
 
@@ -1179,7 +1204,7 @@ export const ShiftSchedule: React.FC = () => {
               <button
                 type="button"
                 onClick={() => handleDelete(editingId)}
-                className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-1 transition-colors"
+                className="px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-1 transition-colors cursor-pointer"
               >
                 <Trash2 className="w-3.5 h-3.5" /> Hapus
               </button>
@@ -1189,15 +1214,15 @@ export const ShiftSchedule: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsManualModalOpen(false)}
-                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
+                className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors cursor-pointer"
               >
                 Batal
               </button>
               <button
                 type="submit"
-                className="px-5 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] text-[#111111] border border-[#E5B800] text-xs font-bold shadow-sm transition-colors"
+                className="px-5 py-2 rounded-xl bg-[#FFD416] hover:bg-[#FFE160] text-[#202020] border border-[#FFD416] text-xs font-bold shadow-sm transition-colors cursor-pointer"
               >
-                Simpan Jadwal
+                Simpan & Publikasikan
               </button>
             </div>
           </div>
@@ -1299,27 +1324,23 @@ export const ShiftSchedule: React.FC = () => {
       >
         <form onSubmit={handleApplyBulk} className="space-y-4">
           <p className="text-xs text-slate-600 dark:text-gray-300 leading-relaxed">
-            Tetapkan shift untuk beberapa karyawan sekaligus dalam rentang tanggal. Hasil penetapan akan otomatis tersimpan sebagai <strong>Draft</strong>.
+            Tetapkan shift untuk beberapa karyawan sekaligus dalam rentang tanggal. Hasil penetapan akan langsung resmi dipublikasikan (<strong>Published</strong>).
           </p>
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1">Tanggal Mulai</label>
-              <input
-                type="date"
+              <ModernDatePicker
                 value={bulkStartDate}
-                onChange={(e) => setBulkStartDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202023] text-xs text-slate-800 dark:text-white [color-scheme:light_dark]"
+                onChange={setBulkStartDate}
+                label="Tanggal Mulai"
                 required
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1">Tanggal Akhir</label>
-              <input
-                type="date"
+              <ModernDatePicker
                 value={bulkEndDate}
-                onChange={(e) => setBulkEndDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202023] text-xs text-slate-800 dark:text-white [color-scheme:light_dark]"
+                onChange={setBulkEndDate}
+                label="Tanggal Selesai"
                 required
               />
             </div>
@@ -1385,9 +1406,9 @@ export const ShiftSchedule: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] text-[#111111] border border-[#E5B800] text-xs font-bold transition-colors shadow-sm"
+              className="px-5 py-2 rounded-xl bg-[#FFD416] hover:bg-[#FFE160] text-[#202020] border border-[#FFD416] text-xs font-bold transition-colors shadow-sm cursor-pointer"
             >
-              Terapkan Bulk Assignment
+              Terapkan & Publikasikan
             </button>
           </div>
         </form>

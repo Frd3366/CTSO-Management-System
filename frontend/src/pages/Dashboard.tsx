@@ -18,6 +18,7 @@ import {
   Trash2
 } from 'lucide-react';
 import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor } from '../utils/codeStyles';
+import { ModernDatePicker } from '../components/common/ModernDatePicker';
 
 export const Dashboard: React.FC = () => {
   const { employees, schedules, shifts, jobdesks, leaves, currentUser, deleteSchedule } = useAuth();
@@ -263,17 +264,13 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <label className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-xs text-[#0F172A] dark:text-white transition-all shadow-2xs">
-            <Calendar className="w-3.5 h-3.5 text-slate-600 dark:text-gray-300" aria-hidden="true" />
-            <span className="sr-only">Pilih Tanggal Operasional</span>
-            <input
-              type="date"
-              aria-label="Pilih Tanggal Operasional"
+          <div className="w-56 sm:w-64">
+            <ModernDatePicker
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
-              className="bg-transparent font-bold text-xs text-[#0F172A] dark:text-white border-0 outline-none focus:ring-0"
+              onChange={setSelectedDate}
+              showQuickPresets={true}
             />
-          </label>
+          </div>
 
           <div
             className="flex items-center p-1 rounded-xl border border-slate-200/80 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 text-xs"

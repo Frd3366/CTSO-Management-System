@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Modal } from '../components/common/Modal';
+import { ModernDatePicker } from '../components/common/ModernDatePicker';
 import { getShiftBadgeStyle, getJobdeskBadgeStyle } from '../utils/codeStyles';
 import {
   FileSpreadsheet,
@@ -327,24 +328,16 @@ export const ScheduleHistory: React.FC = () => {
 
           {deleteMode === 'date_range' && (
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Dari Tanggal</label>
-                <input
-                  type="date"
-                  value={deleteStartDate}
-                  onChange={(e) => setDeleteStartDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs text-slate-900 dark:text-white"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Sampai Tanggal</label>
-                <input
-                  type="date"
-                  value={deleteEndDate}
-                  onChange={(e) => setDeleteEndDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs text-slate-900 dark:text-white"
-                />
-              </div>
+              <ModernDatePicker
+                label="Dari Tanggal"
+                value={deleteStartDate}
+                onChange={setDeleteStartDate}
+              />
+              <ModernDatePicker
+                label="Sampai Tanggal"
+                value={deleteEndDate}
+                onChange={setDeleteEndDate}
+              />
             </div>
           )}
 

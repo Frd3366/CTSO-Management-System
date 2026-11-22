@@ -219,9 +219,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadState<EmployeePermissionConfig>('employee_permissions', INITIAL_EMPLOYEE_PERMISSION)
   );
 
-  const [schedules, setSchedules] = useState<ScheduleAssignment[]>(() =>
-    loadState<ScheduleAssignment[]>('schedules', INITIAL_SCHEDULES)
-  );
+  const [schedules, setSchedules] = useState<ScheduleAssignment[]>(() => {
+    const loaded = loadState<ScheduleAssignment[]>('schedules', INITIAL_SCHEDULES);
+    return loaded.map((s) => ({
+      ...s,
+      publicationStatus: 'Published' as const
+    }));
+  });
   const [scheduleHistories, setScheduleHistories] = useState<ScheduleHistoryItem[]>(() =>
     loadState<ScheduleHistoryItem[]>('schedule_histories', INITIAL_SCHEDULE_HISTORIES)
   );
@@ -926,7 +930,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       shiftCode: string,
       jobdeskCode?: string,
       location?: WorkLocation,
-      publicationStatus: 'Draft' | 'Published' = 'Draft',
+      publicationStatus: 'Draft' | 'Published' = 'Published',
       ignoreId?: string
     ): { valid: boolean; error?: string } => {
       // 1. Employee Active Check
@@ -992,6 +996,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newId = `sch_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const newRecord: ScheduleAssignment = {
         ...assignment,
+        publicationStatus: 'Published',
         id: newId,
         employeeName: emp?.name || assignment.employeeName,
         employeeCode: emp?.employeeNo || assignment.employeeCode,
@@ -1247,7 +1252,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             shiftCode,
             jobdeskCode: shiftCode === 'OFF' ? undefined : jobdeskCode,
             location: shiftCode === 'OFF' ? undefined : location,
-            publicationStatus: 'Draft'
+            publicationStatus: 'Published'
           });
 
           if (res.success) {
@@ -1284,7 +1289,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           shiftCode: src.shiftCode,
           jobdeskCode: src.jobdeskCode,
           location: src.location,
-          publicationStatus: 'Draft'
+          publicationStatus: 'Published'
         });
         if (res.success) count++;
       });
@@ -1331,7 +1336,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               shiftCode: chosenShift,
               jobdeskCode: chosenJobdesk,
               location: isOff ? undefined : chosenLoc,
-              publicationStatus: 'Draft'
+              publicationStatus: 'Published'
             });
             if (res.success) count++;
           }

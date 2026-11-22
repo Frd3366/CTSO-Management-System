@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import { API_BASE } from '../api/client';
 import { RosterChangeRequest, LeaveRecord, RequestType, LeaveType } from '../types';
 import { getShiftBadgeStyle, getJobdeskBadgeStyle } from '../utils/codeStyles';
+import { ModernDatePicker } from '../components/common/ModernDatePicker';
 import {
   getTelegramConfig,
   saveTelegramConfig,
@@ -822,16 +823,12 @@ export const RequestsAndLeaves: React.FC = () => {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-[#111111] dark:text-white mb-1">Target Date</label>
-                <input
-                  type="date"
-                  value={shiftDate}
-                  onChange={(e) => setShiftDate(e.target.value)}
-                  className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] dark:border-white/10 bg-[#E7F0FE]/50 dark:bg-white/5 text-xs text-[#111111] dark:text-white focus:outline-none focus:border-[#F9C900]"
-                  required
-                />
-              </div>
+              <ModernDatePicker
+                label="Target Date"
+                value={shiftDate}
+                onChange={setShiftDate}
+                required
+              />
 
               {newShiftReqType === 'Shift Exchange' && (
                 <div>
@@ -979,26 +976,18 @@ export const RequestsAndLeaves: React.FC = () => {
               </div>
 
               <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] dark:text-white mb-1">Start Date</label>
-                  <input
-                    type="date"
-                    value={leaveStartDate}
-                    onChange={(e) => setLeaveStartDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] dark:border-white/10 bg-[#E7F0FE]/50 dark:bg-white/5 text-xs text-[#111111] dark:text-white focus:outline-none focus:border-[#F9C900]"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-[#111111] dark:text-white mb-1">End Date</label>
-                  <input
-                    type="date"
-                    value={leaveEndDate}
-                    onChange={(e) => setLeaveEndDate(e.target.value)}
-                    className="w-full px-3 py-2 rounded-xl border border-[#CBD5E1] dark:border-white/10 bg-[#E7F0FE]/50 dark:bg-white/5 text-xs text-[#111111] dark:text-white focus:outline-none focus:border-[#F9C900]"
-                    required
-                  />
-                </div>
+                <ModernDatePicker
+                  label="Start Date"
+                  value={leaveStartDate}
+                  onChange={setLeaveStartDate}
+                  required
+                />
+                <ModernDatePicker
+                  label="End Date"
+                  value={leaveEndDate}
+                  onChange={setLeaveEndDate}
+                  required
+                />
               </div>
 
               <div>

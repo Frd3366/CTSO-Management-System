@@ -38,3 +38,39 @@ export const formatDateDMY = (isoDate: string): string => {
   if (parts.length !== 3) return isoDate;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
 };
+
+export const MONTH_NAMES_INDO = [
+  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+];
+
+export const DAY_NAMES_INDO = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+export const DAY_NAMES_SHORT_INDO = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+export const formatDateFullIndo = (isoDate: string): string => {
+  if (!isoDate) return '';
+  const d = parseLocalDate(isoDate);
+  const dayName = DAY_NAMES_INDO[d.getDay()];
+  const monthName = MONTH_NAMES_INDO[d.getMonth()];
+  return `${dayName}, ${d.getDate()} ${monthName} ${d.getFullYear()}`;
+};
+
+export const formatDateShortIndo = (isoDate: string): string => {
+  if (!isoDate) return '';
+  const d = parseLocalDate(isoDate);
+  const dayName = DAY_NAMES_SHORT_INDO[d.getDay()];
+  const monthName = MONTH_NAMES_INDO[d.getMonth()].slice(0, 3);
+  return `${dayName}, ${d.getDate()} ${monthName} ${d.getFullYear()}`;
+};
+
+export const formatDateLongIndo = (isoDate: string): string => {
+  if (!isoDate) return '';
+  const d = parseLocalDate(isoDate);
+  const monthName = MONTH_NAMES_INDO[d.getMonth()];
+  return `${d.getDate()} ${monthName} ${d.getFullYear()}`;
+};
+
+export const formatMonthYearIndo = (date: Date): string => {
+  return `${MONTH_NAMES_INDO[date.getMonth()]} ${date.getFullYear()}`;
+};
+

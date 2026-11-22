@@ -4,65 +4,65 @@
 
 @layer base {
   :root {
-    --primary: #F9C900;
-    --primary-hover: #E5B800;
-    --bg-dark: #111111;
-    --bg-light: #F5F6F8;
-    --surface-input: #E7F0FE;
-    --text-primary: #111111;
-    --text-light: #F2F4F7;
+    --primary: #FFD416;
+    --primary-hover: #FFE160;
+    --bg-dark: #202020;
+    --bg-light: #F4F4F4;
+    --surface-input: #F4F4F4;
+    --text-primary: #202020;
+    --text-light: #F4F4F4;
     --text-secondary: #475569;
     --border: #E2E8F0;
 
     /* shadcn/ui theme tokens (CMS Light) */
-    --background: 220 20% 97%;
-    --foreground: 0 0% 7%;
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 7%;
+    --background: 0 0% 95.7%; /* #F4F4F4 */
+    --foreground: 0 0% 12.5%; /* #202020 */
+    --card: 0 0% 100%;       /* #FFFFFF */
+    --card-foreground: 0 0% 12.5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 7%;
-    --shadcn-primary: 0 0% 7%;
-    --shadcn-primary-foreground: 48 100% 49%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
+    --popover-foreground: 0 0% 12.5%;
+    --shadcn-primary: 48 100% 54.3%; /* #FFD416 */
+    --shadcn-primary-foreground: 0 0% 12.5%;
+    --secondary: 0 0% 95.7%;
+    --secondary-foreground: 0 0% 12.5%;
+    --muted: 0 0% 95.7%;
     --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 48 100% 49%;
-    --accent-foreground: 0 0% 7%;
+    --accent: 49 100% 68.6%; /* #FFE160 */
+    --accent-foreground: 0 0% 12.5%;
     --destructive: 347 77% 50%;
     --destructive-foreground: 210 40% 98%;
     --shadcn-border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 48 100% 49%;
+    --ring: 48 100% 54.3%;
     --radius: 0.75rem;
   }
 
   .dark {
     /* shadcn/ui theme tokens (CMS Dark) */
-    --background: 0 0% 7%;
-    --foreground: 216 18% 95%;
-    --card: 240 4% 10%;
-    --card-foreground: 216 18% 95%;
-    --popover: 240 4% 10%;
-    --popover-foreground: 216 18% 95%;
-    --shadcn-primary: 48 100% 49%;
-    --shadcn-primary-foreground: 0 0% 7%;
-    --secondary: 240 4% 16%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 240 4% 16%;
+    --background: 0 0% 12.5%; /* #202020 */
+    --foreground: 0 0% 95.7%; /* #F4F4F4 */
+    --card: 0 0% 15%;        /* #262626 */
+    --card-foreground: 0 0% 95.7%;
+    --popover: 0 0% 15%;
+    --popover-foreground: 0 0% 95.7%;
+    --shadcn-primary: 48 100% 54.3%; /* #FFD416 */
+    --shadcn-primary-foreground: 0 0% 12.5%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 95.7%;
+    --muted: 0 0% 18%;
     --muted-foreground: 215 20.2% 65.1%;
-    --accent: 48 100% 49%;
-    --accent-foreground: 0 0% 7%;
+    --accent: 49 100% 68.6%; /* #FFE160 */
+    --accent-foreground: 0 0% 12.5%;
     --destructive: 347 77% 50%;
     --destructive-foreground: 210 40% 98%;
-    --shadcn-border: 240 4% 18%;
-    --input: 240 4% 18%;
-    --ring: 48 100% 49%;
+    --shadcn-border: 0 0% 22%;
+    --input: 0 0% 22%;
+    --ring: 48 100% 54.3%;
   }
 
   body {
-    background-color: #F5F6F8;
-    color: #111111;
+    background-color: #F4F4F4;
+    color: #202020;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -70,19 +70,19 @@
   }
 
   .dark body {
-    background-color: #111111;
-    color: #F2F4F7;
+    background-color: #202020;
+    color: #F4F4F4;
   }
 
   .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6 {
-    color: #F2F4F7;
+    color: #F4F4F4;
   }
 
   .dark input:not([type="checkbox"]):not([type="radio"]),
   .dark select,
   .dark textarea {
-    background-color: #202023 !important;
-    color: #F2F4F7 !important;
+    background-color: #282828 !important;
+    color: #F4F4F4 !important;
     border-color: rgba(255, 255, 255, 0.15) !important;
   }
 

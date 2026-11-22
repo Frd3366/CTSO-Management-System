@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Modal } from '../components/common/Modal';
+import { ModernDatePicker } from '../components/common/ModernDatePicker';
 import { LeaveType, LeaveStatus } from '../types';
 import {
   CalendarOff,
@@ -315,26 +316,18 @@ export const LeaveManagement: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal Mulai</label>
-              <input
-                type="date"
-                value={formStartDate}
-                onChange={(e) => setFormStartDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Tanggal Selesai</label>
-              <input
-                type="date"
-                value={formEndDate}
-                onChange={(e) => setFormEndDate(e.target.value)}
-                className="w-full px-3 py-2 rounded-xl border border-slate-200 text-xs"
-                required
-              />
-            </div>
+            <ModernDatePicker
+              label="Tanggal Mulai"
+              value={formStartDate}
+              onChange={setFormStartDate}
+              required
+            />
+            <ModernDatePicker
+              label="Tanggal Selesai"
+              value={formEndDate}
+              onChange={setFormEndDate}
+              required
+            />
           </div>
 
           <div>
