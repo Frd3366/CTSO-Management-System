@@ -39,10 +39,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles?: ('Adm
   return <>{children}</>;
 };
 
+const getBasename = () => {
+  return typeof window !== 'undefined' && window.location.pathname.startsWith('/cms')
+    ? '/cms'
+    : '';
+};
+
 export const App: React.FC = () => {
   return (
     <ThemeProvider>
-      <BrowserRouter basename="/cms">
+      <BrowserRouter basename={getBasename()}>
         <ModalProvider>
           <AuthProvider>
             <ToastProvider>

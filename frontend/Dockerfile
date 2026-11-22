@@ -13,7 +13,7 @@ RUN npm run build
 FROM nginx:alpine
 
 COPY --from=builder /app/dist /usr/share/nginx/html
-RUN mkdir -p /usr/share/nginx/html/cms && cp -r /usr/share/nginx/html/* /usr/share/nginx/html/cms/ 2>/dev/null || true
+COPY --from=builder /app/dist /usr/share/nginx/html/cms
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
