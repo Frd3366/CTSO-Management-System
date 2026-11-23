@@ -127,12 +127,14 @@ export const ShiftMaster: React.FC = () => {
   };
 
   const previewBg = isDark
-    ? blendSolidColor(formColor, 0.42, '#202020')
-    : blendSolidColor(formColor, 0.22, '#FFFFFF');
+    ? blendSolidColor(formColor, 0.50, '#202020')
+    : blendSolidColor(formColor, 0.32, '#FFFFFF');
   const previewBorder = isDark
-    ? blendSolidColor(formColor, 0.65, '#202020')
-    : blendSolidColor(formColor, 0.55, '#FFFFFF');
+    ? blendSolidColor(formColor, 0.80, '#202020')
+    : blendSolidColor(formColor, 0.75, '#FFFFFF');
   const previewText = isDark ? '#FFFFFF' : '#202020';
+  const selectedColorName =
+    RECOMMENDED_SHIFT_COLORS.find((c) => c.hex.toLowerCase() === formColor.toLowerCase())?.name || 'Custom';
 
   return (
     <div className="space-y-6">
@@ -287,17 +289,17 @@ export const ShiftMaster: React.FC = () => {
             </select>
           </div>
 
-          {/* Curated Recommended Color Palette (Synced to Schedule, Text Auto-Adapts to Light/Dark Mode) */}
+          {/* Curated High-Contrast Color Palette (Synced to Schedule, Text Auto-Adapts to Light/Dark Mode) */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
-                Rekomendasi Warna Kode
+                Rekomendasi Warna Kode ({selectedColorName})
               </label>
               <span className="text-[10px] text-slate-400 dark:text-gray-400">
-                Teks otomatis menyesuaikan Light / Dark Mode
+                Teks otomatis ikut Light / Dark Mode
               </span>
             </div>
-            <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10">
+            <div className="grid grid-cols-7 gap-2.5 p-3 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10">
               {RECOMMENDED_SHIFT_COLORS.map((swatch) => {
                 const isSelected = formColor.toLowerCase() === swatch.hex.toLowerCase();
                 return (
@@ -308,15 +310,15 @@ export const ShiftMaster: React.FC = () => {
                     title={swatch.name}
                     aria-label={`Pilih warna ${swatch.name}`}
                     style={{ backgroundColor: swatch.hex }}
-                    className={`w-full aspect-square rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                    className={`w-full aspect-square rounded-xl flex items-center justify-center transition-all cursor-pointer border border-black/10 dark:border-white/15 ${
                       isSelected
-                        ? 'ring-2 ring-offset-2 ring-[#202020] dark:ring-[#FFD416] dark:ring-offset-[#202020] scale-105 shadow-sm'
-                        : 'hover:scale-105 opacity-90 hover:opacity-100'
+                        ? 'ring-2 ring-offset-2 ring-[#202020] dark:ring-[#FFD416] dark:ring-offset-[#202020] scale-105 shadow-md'
+                        : 'hover:scale-105 opacity-95 hover:opacity-100'
                     }`}
                   >
                     {isSelected && (
                       <Check
-                        className={`w-3.5 h-3.5 stroke-[3] ${
+                        className={`w-4 h-4 stroke-[3] ${
                           swatch.hex.toUpperCase() === '#FFD416' ? 'text-[#202020]' : 'text-white'
                         }`}
                       />

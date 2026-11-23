@@ -138,24 +138,20 @@ export const getMasterJobdesks = (): JobdeskItem[] => {
 };
 
 export const RECOMMENDED_SHIFT_COLORS = [
+  { name: 'Crimson Red', hex: '#E11D48' },
+  { name: 'Bright Orange', hex: '#EA580C' },
+  { name: 'Golden Yellow', hex: '#FFD416' },
+  { name: 'Fresh Lime', hex: '#65A30D' },
+  { name: 'Emerald Green', hex: '#059669' },
+  { name: 'Ocean Teal', hex: '#0D9488' },
   { name: 'Sky Blue', hex: '#0284C7' },
-  { name: 'Royal Blue', hex: '#2563EB' },
+  { name: 'Deep Blue', hex: '#1D4ED8' },
   { name: 'Indigo', hex: '#4F46E5' },
-  { name: 'Violet', hex: '#7C3AED' },
-  { name: 'Purple', hex: '#9333EA' },
-  { name: 'Fuchsia', hex: '#C026D3' },
-  { name: 'Pink', hex: '#DB2777' },
-  { name: 'Rose', hex: '#E11D48' },
-  { name: 'Red', hex: '#DC2626' },
-  { name: 'Orange', hex: '#EA580C' },
-  { name: 'Amber', hex: '#D97706' },
-  { name: 'Gold', hex: '#FFD416' },
-  { name: 'Lime', hex: '#65A30D' },
-  { name: 'Emerald', hex: '#059669' },
-  { name: 'Teal', hex: '#0D9488' },
-  { name: 'Cyan', hex: '#0891B2' },
-  { name: 'Slate', hex: '#475569' },
-  { name: 'Charcoal', hex: '#334155' },
+  { name: 'Vivid Purple', hex: '#9333EA' },
+  { name: 'Hot Magenta', hex: '#DB2777' },
+  { name: 'Warm Brown', hex: '#92400E' },
+  { name: 'Cool Slate', hex: '#475569' },
+  { name: 'Charcoal Black', hex: '#111827' },
 ] as const;
 
 // Dynamically inject stylesheet so ANY color change in Schedule/Jobdesk Master updates every card immediately
@@ -177,20 +173,20 @@ export const syncDynamicStyles = (shifts?: ShiftMasterItem[], jobdesks?: Jobdesk
 
   let css = '/* Dynamic Master Code Colors */\n';
 
-  // Generate shift styles (Automatically adapts text color to Light/Dark mode)
+  // Generate shift styles (High-contrast distinct tint, text automatically adapts to Light/Dark mode)
   activeShifts.forEach((s) => {
     const slug = toCssSlug(s.code);
     const color = s.color || '#0284C7';
 
-    const cardBgLight = blendSolidColor(color, 0.24, '#FFFFFF');
-    const cardBorderLight = blendSolidColor(color, 0.45, '#FFFFFF');
-    const cardBgDark = blendSolidColor(color, 0.36, '#202020');
-    const cardBorderDark = blendSolidColor(color, 0.55, '#202020');
+    const cardBgLight = blendSolidColor(color, 0.30, '#FFFFFF');
+    const cardBorderLight = blendSolidColor(color, 0.65, '#FFFFFF');
+    const cardBgDark = blendSolidColor(color, 0.44, '#202020');
+    const cardBorderDark = blendSolidColor(color, 0.72, '#202020');
 
-    const badgeBgLight = blendSolidColor(color, 0.22, '#FFFFFF');
-    const badgeBorderLight = blendSolidColor(color, 0.55, '#FFFFFF');
-    const badgeBgDark = blendSolidColor(color, 0.42, '#202020');
-    const badgeBorderDark = blendSolidColor(color, 0.65, '#202020');
+    const badgeBgLight = blendSolidColor(color, 0.32, '#FFFFFF');
+    const badgeBorderLight = blendSolidColor(color, 0.75, '#FFFFFF');
+    const badgeBgDark = blendSolidColor(color, 0.50, '#202020');
+    const badgeBorderDark = blendSolidColor(color, 0.80, '#202020');
 
     css += `
 .card-shift-${slug},

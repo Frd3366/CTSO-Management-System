@@ -146,13 +146,18 @@ def create_shift(req: ShiftCreate, db: Session = Depends(get_db)):
 
 @router.put("/shifts/{shift_id}")
 def update_shift(shift_id: str, req: ShiftUpdate, db: Session = Depends(get_db)):
-    shift = db.query(ShiftModel).filter(ShiftModel.id == shift_id).first()
+    shift = db.query(ShiftModel).filter(
+        (ShiftModel.id == shift_id) | (ShiftModel.code == shift_id)
+    ).first()
+    if not shift and req.code:
+        shift = db.query(ShiftModel).filter(ShiftModel.code == req.code).first()
     if not shift:
         raise HTTPException(status_code=404, detail="Shift tidak ditemukan.")
     for k, v in req.dict(exclude_unset=True).items():
         setattr(shift, k, v)
     db.commit()
-    return {"success": True}
+    db.refresh(shift)
+    return {"success": True, "id": shift.id, "color": shift.color}
 
 @router.delete("/shifts/{shift_id}")
 def delete_shift(shift_id: str, db: Session = Depends(get_db)):
@@ -196,13 +201,18 @@ def create_jobdesk(req: JobdeskCreate, db: Session = Depends(get_db)):
 
 @router.put("/jobdesks/{jobdesk_id}")
 def update_jobdesk(jobdesk_id: str, req: JobdeskUpdate, db: Session = Depends(get_db)):
-    j = db.query(JobdeskModel).filter(JobdeskModel.id == jobdesk_id).first()
+    j = db.query(JobdeskModel).filter(
+        (JobdeskModel.id == jobdesk_id) | (JobdeskModel.code == jobdesk_id)
+    ).first()
+    if not j and req.code:
+        j = db.query(JobdeskModel).filter(JobdeskModel.code == req.code).first()
     if not j:
         raise HTTPException(status_code=404, detail="Jobdesk tidak ditemukan.")
     for k, v in req.dict(exclude_unset=True).items():
         setattr(j, k, v)
     db.commit()
-    return {"success": True}
+    db.refresh(j)
+    return {"success": True, "id": j.id, "color": j.color}
 
 @router.delete("/jobdesks/{jobdesk_id}")
 def delete_jobdesk(jobdesk_id: str, db: Session = Depends(get_db)):

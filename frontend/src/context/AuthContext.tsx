@@ -1961,38 +1961,57 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Master Data Add/Update
   const addShift = useCallback(
     (shift: Omit<ShiftMasterItem, 'id'>) => {
-      const newShift: ShiftMasterItem = { ...shift, id: `sh_${Date.now()}` };
-      setShifts((prev) => [...prev, newShift]);
+      const tempId = `sh_${Date.now()}`;
+      const newShift: ShiftMasterItem = { ...shift, id: tempId };
+      setShifts((prev) => {
+        const next = [...prev, newShift];
+        syncDynamicStyles(next, jobdesks);
+        return next;
+      });
 
       apiClient.isBackendAvailable().then((isUp) => {
         if (isUp) {
-          apiClient.post('/shifts', {
-            code: shift.code,
-            name: shift.name,
-            start_time: shift.startTime,
-            end_time: shift.endTime,
-            end_day_offset: shift.endDayOffset || 0,
-            color: shift.color || '#F9C900',
-            is_off: shift.isOff || false,
-            is_active: shift.status === 'active'
-          }).catch((e) => console.warn('Failed to add shift on backend', e));
+          apiClient
+            .post<any>('/shifts', {
+              code: shift.code,
+              name: shift.name,
+              start_time: shift.startTime,
+              end_time: shift.endTime,
+              end_day_offset: shift.endDayOffset || 0,
+              color: shift.color || '#0284C7',
+              is_off: shift.isOff || false,
+              is_active: shift.status === 'active'
+            })
+            .then((res) => {
+              const serverId = res.data?.data?.id;
+              if (serverId && serverId !== tempId) {
+                setShifts((prev) => prev.map((s) => (s.id === tempId ? { ...s, id: serverId } : s)));
+              }
+            })
+            .catch((e) => console.warn('Failed to add shift on backend', e));
         }
       });
 
-      addActivityLog('CREATE_SHIFT_MASTER', 'schedule', `Menambah master shift ${shift.name} (${shift.code})`);
+      addActivityLog('CREATE_SHIFT_MASTER', 'schedule', `Menambah master schedule ${shift.name} (${shift.code})`);
     },
-    [addActivityLog]
+    [addActivityLog, jobdesks]
   );
 
   const updateShift = useCallback(
     (id: string, shift: Partial<ShiftMasterItem>) => {
       let oldCode: string | undefined;
+      let currentCode: string | undefined;
       setShifts((prev) => {
         const found = prev.find((s) => s.id === id);
-        if (found && shift.code && shift.code !== found.code) {
-          oldCode = found.code;
+        if (found) {
+          currentCode = found.code;
+          if (shift.code && shift.code !== found.code) {
+            oldCode = found.code;
+          }
         }
-        return prev.map((s) => (s.id === id ? { ...s, ...shift } : s));
+        const next = prev.map((s) => (s.id === id ? { ...s, ...shift } : s));
+        syncDynamicStyles(next, jobdesks);
+        return next;
       });
       if (oldCode && shift.code) {
         const newCode = shift.code;
@@ -2001,9 +2020,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         );
       }
 
-      apiClient.isBackendAvailable().then((isUp) => {
+      apiClient.isBackendAvailable().then(async (isUp) => {
         if (isUp) {
-          apiClient.put(`/shifts/${id}`, {
+          const payload = {
             code: shift.code,
             name: shift.name,
             start_time: shift.startTime,
@@ -2012,13 +2031,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             color: shift.color,
             is_off: shift.isOff,
             is_active: shift.status ? shift.status === 'active' : undefined
-          }).catch((e) => console.warn('Failed to update shift on backend', e));
+          };
+          const res = await apiClient.put(`/shifts/${encodeURIComponent(id)}`, payload);
+          if (!res.success && (currentCode || shift.code)) {
+            const fallbackCode = currentCode || shift.code || '';
+            await apiClient.put(`/shifts/${encodeURIComponent(fallbackCode)}`, payload);
+          }
         }
       });
 
-      addActivityLog('UPDATE_SHIFT_MASTER', 'schedule', `Memperbarui master shift #${id}`);
+      addActivityLog('UPDATE_SHIFT_MASTER', 'schedule', `Memperbarui master schedule #${id}`);
     },
-    [addActivityLog]
+    [addActivityLog, jobdesks]
   );
 
   const deleteShift = useCallback(
