@@ -701,19 +701,19 @@ export const Dashboard: React.FC = () => {
                               {emp?.teamName || 'Operations'}
                             </div>
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 whitespace-nowrap">
                             <span
-                              className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${
+                              className={`inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-md text-[10px] font-bold font-mono ${
                                 getShiftBadgeStyle(item.shiftCode).badge
                               }`}
                             >
                               {item.shiftCode}
                             </span>
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 whitespace-nowrap">
                             {item.jobdeskCode && !isOff ? (
                               <span
-                                className={`px-2 py-0.5 rounded-md text-[10px] font-extrabold font-mono ${
+                                className={`inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-md text-[10px] font-extrabold font-mono ${
                                   getJobdeskBadgeStyle(item.jobdeskCode).badge
                                 }`}
                               >
@@ -723,18 +723,18 @@ export const Dashboard: React.FC = () => {
                               <span className="text-[10px] text-slate-400 dark:text-gray-500">-</span>
                             )}
                           </td>
-                          <td className="py-3 px-4">
-                            <span className="flex items-center gap-1.5 text-[#0F172A] dark:text-gray-200 font-medium">
-                              <MapPin className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                          <td className="py-3 px-4 whitespace-nowrap">
+                            <span className="inline-flex items-center gap-1.5 text-[#0F172A] dark:text-gray-200 font-medium whitespace-nowrap">
+                              <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
                               {item.location || emp?.defaultLocation || '-'}
                             </span>
                           </td>
-                          <td className="py-3 px-4 text-slate-600 dark:text-gray-300 font-mono text-[11px]">
+                          <td className="py-3 px-4 text-slate-600 dark:text-gray-300 font-mono text-[11px] whitespace-nowrap">
                             {getShiftHours(item.shiftCode)}
                           </td>
-                          <td className="py-3 px-4">
+                          <td className="py-3 px-4 whitespace-nowrap">
                             <span
-                              className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                              className={`inline-flex items-center whitespace-nowrap px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
                                 isOff
                                   ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-200 dark:border-rose-900/50'
                                   : item.publicationStatus === 'Published'
