@@ -78,7 +78,7 @@
     color: #F4F4F4;
   }
 
-  .dark input:not([type="checkbox"]):not([type="radio"]),
+  .dark input:not([type="checkbox"]):not([type="radio"]):not(.global-search-input),
   .dark select,
   .dark textarea {
     background-color: #282828 !important;
@@ -112,14 +112,21 @@
     cursor: not-allowed;
   }
 
-  :focus-visible {
-    outline: 2px solid #0F172A !important;
-    outline-offset: 2px !important;
+  :focus-visible:not(input):not(textarea):not(.no-focus-ring) {
+    outline: 2px solid #202020;
+    outline-offset: 2px;
   }
 
-  .dark :focus-visible {
-    outline: 2px solid #F9C900 !important;
-    outline-offset: 2px !important;
+  .dark :focus-visible:not(input):not(textarea):not(.no-focus-ring) {
+    outline: 2px solid #FFD416;
+    outline-offset: 2px;
+  }
+
+  .global-search-input:focus,
+  .global-search-input:focus-visible {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
   }
 
   select {

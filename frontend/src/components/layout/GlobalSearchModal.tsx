@@ -153,7 +153,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search pages, employees, shifts, jobdesks, or locations..."
-            className="w-full pl-3 pr-8 py-1.5 text-sm text-[#111111] dark:text-white font-medium placeholder-[#647084] dark:placeholder-gray-400 bg-transparent border-0 border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none focus-visible:outline-none shadow-none"
+            className="global-search-input no-focus-ring w-full pl-3 pr-8 py-1.5 text-sm text-[#111111] dark:text-white font-medium placeholder-[#647084] dark:placeholder-gray-400 bg-transparent border-0 border-none outline-none ring-0 focus:ring-0 focus:outline-none focus:border-none focus-visible:outline-none shadow-none"
             style={{ border: 'none', outline: 'none', boxShadow: 'none' }}
           />
           {query && (
