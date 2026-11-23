@@ -153,15 +153,67 @@ export const EmployeeManagement: React.FC = () => {
     e.preventDefault();
     if (!isAdmin) return;
 
+    const cleanName = formName.trim();
+    const cleanNameLower = cleanName.toLowerCase();
+    const cleanEmail = formEmail.trim().toLowerCase();
+    const cleanEmpNo = formEmployeeNo.trim();
+
+    if (!cleanName || !cleanEmail) {
+      showToast('Nama lengkap dan email wajib diisi.', 'error');
+      return;
+    }
+
+    const editingEmp = editingId ? employees.find((emp) => emp.id === editingId) : null;
+
+    // Duplicate Employee ID check
+    if (
+      employees.some(
+        (emp) => emp.id !== editingId && (emp.employeeNo || '').trim().toLowerCase() === cleanEmpNo.toLowerCase()
+      )
+    ) {
+      showToast('Employee ID sudah digunakan oleh karyawan lain.', 'error');
+      return;
+    }
+
+    // Duplicate Name check across employees and user accounts
+    const dupEmpName = employees.some(
+      (emp) => emp.id !== editingId && (emp.name || '').trim().toLowerCase() === cleanNameLower
+    );
+    const dupUserName = users.some(
+      (u) =>
+        u.employeeId !== editingId &&
+        (!editingEmp || (u.email || '').trim().toLowerCase() !== (editingEmp.email || '').trim().toLowerCase()) &&
+        (u.name || '').trim().toLowerCase() === cleanNameLower
+    );
+    if (dupEmpName || dupUserName) {
+      showToast('Nama employee sudah terdaftar. Tidak boleh menggunakan nama yang sama.', 'error');
+      return;
+    }
+
+    // Duplicate Email check across employees and user accounts
+    const dupEmpEmail = employees.some(
+      (emp) => emp.id !== editingId && (emp.email || '').trim().toLowerCase() === cleanEmail
+    );
+    const dupUserEmail = users.some(
+      (u) =>
+        u.employeeId !== editingId &&
+        (!editingEmp || (u.email || '').trim().toLowerCase() !== (editingEmp.email || '').trim().toLowerCase()) &&
+        (u.email || '').trim().toLowerCase() === cleanEmail
+    );
+    if (dupEmpEmail || dupUserEmail) {
+      showToast('Email sudah terdaftar. Tidak boleh menggunakan email yang sama.', 'error');
+      return;
+    }
+
     const team = teams.find((t) => t.id === formTeamId);
     const teamName = team?.name || 'CTSO Operations';
 
     if (editingId) {
       updateEmployee(editingId, {
-        employeeNo: formEmployeeNo,
-        name: formName,
+        employeeNo: cleanEmpNo,
+        name: cleanName,
         level: formLevel,
-        email: formEmail,
+        email: cleanEmail,
         phone: formPhone,
         teamId: formTeamId,
         teamName,
@@ -173,27 +225,29 @@ export const EmployeeManagement: React.FC = () => {
 
       // Synchronize role and profile with linked user account
       const linkedUser = users.find(
-        (u) => u.employeeId === editingId || u.email.toLowerCase() === formEmail.toLowerCase()
+        (u) =>
+          u.employeeId === editingId ||
+          (editingEmp && (u.email || '').toLowerCase() === (editingEmp.email || '').toLowerCase())
       );
       if (linkedUser) {
         updateUser(linkedUser.id, {
-          name: formName,
-          email: formEmail,
-          userId: formEmployeeNo,
+          name: cleanName,
+          email: cleanEmail,
+          userId: cleanEmpNo,
           role: formRole,
           status: formStatus
         });
       }
 
-      showToast(`Data karyawan ${formName} berhasil diperbarui (Role: ${formRole}).`, 'success');
+      showToast(`Data karyawan ${cleanName} berhasil diperbarui (Role: ${formRole}).`, 'success');
     } else {
       const newEmpId = `emp_${Date.now()}`;
       addEmployee({
         id: newEmpId,
-        employeeNo: formEmployeeNo,
-        name: formName,
+        employeeNo: cleanEmpNo,
+        name: cleanName,
         level: formLevel,
-        email: formEmail,
+        email: cleanEmail,
         phone: formPhone,
         teamId: formTeamId,
         teamName,

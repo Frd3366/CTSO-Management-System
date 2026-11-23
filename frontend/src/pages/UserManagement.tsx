@@ -168,8 +168,20 @@ export const UserManagement: React.FC = () => {
       }
 
       const cleanEmail = formEmail.trim().toLowerCase();
-      if (accounts.some((a) => a.email.toLowerCase() === cleanEmail)) {
-        showToast('Email sudah terdaftar. Gunakan email lain.', 'error');
+      const cleanNameLower = formName.trim().toLowerCase();
+      if (
+        accounts.some((a) => (a.email || '').trim().toLowerCase() === cleanEmail) ||
+        employees.some((emp) => (emp.email || '').trim().toLowerCase() === cleanEmail)
+      ) {
+        showToast('Email sudah terdaftar. Tidak boleh menggunakan email yang sama.', 'error');
+        return;
+      }
+
+      if (
+        accounts.some((a) => (a.name || '').trim().toLowerCase() === cleanNameLower) ||
+        employees.some((emp) => (emp.name || '').trim().toLowerCase() === cleanNameLower)
+      ) {
+        showToast('Nama employee sudah terdaftar. Tidak boleh menggunakan nama yang sama.', 'error');
         return;
       }
 
@@ -265,11 +277,32 @@ export const UserManagement: React.FC = () => {
     }
 
     const cleanEmail = editEmail.trim().toLowerCase();
+    const cleanNameLower = editName.trim().toLowerCase();
+    const prevEmailLower = (selectedAccount.email || '').trim().toLowerCase();
+
     if (
-      cleanEmail !== selectedAccount.email.toLowerCase() &&
-      accounts.some((a) => a.id !== selectedAccount.id && a.email.toLowerCase() === cleanEmail)
+      accounts.some((a) => a.id !== selectedAccount.id && (a.email || '').trim().toLowerCase() === cleanEmail) ||
+      employees.some(
+        (emp) =>
+          emp.id !== selectedAccount.employeeId &&
+          (emp.email || '').trim().toLowerCase() !== prevEmailLower &&
+          (emp.email || '').trim().toLowerCase() === cleanEmail
+      )
     ) {
-      showToast('Email sudah digunakan oleh akun lain.', 'error');
+      showToast('Email sudah digunakan oleh akun atau employee lain.', 'error');
+      return;
+    }
+
+    if (
+      accounts.some((a) => a.id !== selectedAccount.id && (a.name || '').trim().toLowerCase() === cleanNameLower) ||
+      employees.some(
+        (emp) =>
+          emp.id !== selectedAccount.employeeId &&
+          (emp.email || '').trim().toLowerCase() !== prevEmailLower &&
+          (emp.name || '').trim().toLowerCase() === cleanNameLower
+      )
+    ) {
+      showToast('Nama employee sudah digunakan oleh akun atau employee lain.', 'error');
       return;
     }
 

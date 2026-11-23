@@ -42,10 +42,25 @@ def get_employees(db: Session = Depends(get_db)):
 
 @router.post("/employees")
 def create_employee(req: EmployeeCreate, db: Session = Depends(get_db)):
-    exist = db.query(EmployeeModel).filter(EmployeeModel.employee_no == req.employee_no).first()
-    if exist:
+    clean_no = (req.employee_no or "").strip()
+    clean_name = (req.name or "").strip()
+    clean_email = (req.email or "").strip().lower() if req.email else ""
+
+    if db.query(EmployeeModel).filter(EmployeeModel.employee_no == clean_no).first():
         raise HTTPException(status_code=400, detail="Nomor Induk Karyawan sudah digunakan.")
-    emp = EmployeeModel(**req.dict())
+
+    if clean_name and db.query(EmployeeModel).filter(EmployeeModel.name.ilike(clean_name)).first():
+        raise HTTPException(status_code=400, detail="Nama employee sudah terdaftar. Tidak boleh menggunakan nama yang sama.")
+
+    if clean_email and db.query(EmployeeModel).filter(EmployeeModel.email.ilike(clean_email)).first():
+        raise HTTPException(status_code=400, detail="Email sudah terdaftar. Tidak boleh menggunakan email yang sama.")
+
+    data = req.dict()
+    data["employee_no"] = clean_no
+    data["name"] = clean_name
+    if clean_email:
+        data["email"] = clean_email
+    emp = EmployeeModel(**data)
     db.add(emp)
     db.commit()
     db.refresh(emp)
@@ -56,7 +71,29 @@ def update_employee(emp_id: str, req: EmployeeUpdate, db: Session = Depends(get_
     emp = db.query(EmployeeModel).filter(EmployeeModel.id == emp_id).first()
     if not emp:
         raise HTTPException(status_code=404, detail="Karyawan tidak ditemukan.")
-    for k, v in req.dict(exclude_unset=True).items():
+
+    updates = req.dict(exclude_unset=True)
+    if "name" in updates and updates["name"]:
+        clean_name = updates["name"].strip()
+        dup_name = db.query(EmployeeModel).filter(
+            EmployeeModel.id != emp_id,
+            EmployeeModel.name.ilike(clean_name)
+        ).first()
+        if dup_name:
+            raise HTTPException(status_code=400, detail="Nama employee sudah digunakan oleh karyawan lain.")
+        updates["name"] = clean_name
+
+    if "email" in updates and updates["email"]:
+        clean_email = updates["email"].strip().lower()
+        dup_email = db.query(EmployeeModel).filter(
+            EmployeeModel.id != emp_id,
+            EmployeeModel.email.ilike(clean_email)
+        ).first()
+        if dup_email:
+            raise HTTPException(status_code=400, detail="Email sudah digunakan oleh karyawan lain.")
+        updates["email"] = clean_email
+
+    for k, v in updates.items():
         setattr(emp, k, v)
     db.commit()
     return {"success": True}

@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from datetime import datetime
 import uuid
 from ..database import get_db
@@ -117,35 +118,43 @@ def get_users(db: Session = Depends(get_db), current_user: UserModel = Depends(g
 
 @router.post("/register")
 def register(req: UserCreate, db: Session = Depends(get_db)):
-    clean_email = req.email.strip().lower()
-    existing = db.query(UserModel).filter(UserModel.email == clean_email).first()
-    if existing:
-        raise HTTPException(status_code=400, detail="Email sudah terdaftar. Silakan masuk.")
+    clean_email = (req.email or "").strip().lower()
+    clean_name = (req.name or "").strip()
+    clean_name_lower = clean_name.lower()
+
+    if not clean_email or not clean_name:
+        raise HTTPException(status_code=400, detail="Nama lengkap dan email wajib diisi.")
+
+    # Check duplicate email in users and employees
+    if db.query(UserModel).filter(func.lower(func.trim(UserModel.email)) == clean_email).first():
+        raise HTTPException(status_code=400, detail="Email sudah terdaftar. Tidak boleh menggunakan email yang sama.")
+    if db.query(EmployeeModel).filter(func.lower(func.trim(EmployeeModel.email)) == clean_email).first():
+        raise HTTPException(status_code=400, detail="Email sudah digunakan pada data employee lain.")
+
+    # Check duplicate name in users and employees
+    if db.query(UserModel).filter(func.lower(func.trim(UserModel.name)) == clean_name_lower).first():
+        raise HTTPException(status_code=400, detail="Nama sudah terdaftar. Tidak boleh menggunakan nama employee yang sama.")
+    if db.query(EmployeeModel).filter(func.lower(func.trim(EmployeeModel.name)) == clean_name_lower).first():
+        raise HTTPException(status_code=400, detail="Nama employee sudah terdaftar. Tidak boleh menggunakan nama yang sama.")
 
     emp_no = req.employee_id or f"CTSO-{uuid.uuid4().hex[:4].upper()}"
 
-    # Auto-link or create Employee record so they appear in employee list
-    emp = db.query(EmployeeModel).filter(
-        (EmployeeModel.email.ilike(clean_email)) |
-        (EmployeeModel.employee_no == emp_no)
-    ).first()
-
-    if not emp:
-        emp = EmployeeModel(
-            employee_no=emp_no,
-            name=req.name.strip(),
-            role="CTSO Staff",
-            status="active",
-            default_location="Badung",
-            email=clean_email
-        )
-        db.add(emp)
-        db.commit()
-        db.refresh(emp)
+    emp = EmployeeModel(
+        employee_no=emp_no,
+        name=clean_name,
+        role=req.role or "Employee",
+        level="Head" if req.role == "Admin" else "SPV" if req.role == "SPV" else "Junior",
+        status="active",
+        default_location="Badung",
+        email=clean_email
+    )
+    db.add(emp)
+    db.commit()
+    db.refresh(emp)
 
     user = UserModel(
         email=clean_email,
-        name=req.name.strip(),
+        name=clean_name,
         password_hash=get_password_hash(req.password),
         role=req.role or "Employee",
         employee_id=emp.employee_no

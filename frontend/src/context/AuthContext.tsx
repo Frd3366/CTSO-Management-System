@@ -694,28 +694,70 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       employeeNo?: string
     ) => {
       const cleanEmail = email.trim().toLowerCase();
+      const cleanName = name.trim();
+      const cleanNameLower = cleanName.toLowerCase();
+
+      if (!cleanName || !cleanEmail) {
+        return { success: false, error: 'Nama lengkap dan email wajib diisi.' };
+      }
+
       if (
-        users.some((u) => u.email.toLowerCase() === cleanEmail) ||
-        INITIAL_USERS.some((u) => u.email.toLowerCase() === cleanEmail)
+        users.some((u) => (u.email || '').trim().toLowerCase() === cleanEmail) ||
+        INITIAL_USERS.some((u) => (u.email || '').trim().toLowerCase() === cleanEmail) ||
+        employees.some((e) => (e.email || '').trim().toLowerCase() === cleanEmail)
       ) {
-        return { success: false, error: 'Email sudah terdaftar. Silakan gunakan email lain atau masuk.' };
+        return { success: false, error: 'Email sudah terdaftar. Tidak boleh menggunakan email yang sama.' };
+      }
+
+      if (
+        users.some((u) => (u.name || '').trim().toLowerCase() === cleanNameLower) ||
+        INITIAL_USERS.some((u) => (u.name || '').trim().toLowerCase() === cleanNameLower) ||
+        employees.some((e) => (e.name || '').trim().toLowerCase() === cleanNameLower)
+      ) {
+        return { success: false, error: 'Nama employee sudah terdaftar. Tidak boleh menggunakan nama yang sama.' };
       }
 
       const generatedEmpNo = employeeNo?.trim() || `CTSO-${Math.floor(1000 + Math.random() * 9000)}`;
       const newEmpId = `emp_${Date.now()}`;
-      const initials = name
-        .trim()
+      const initials = cleanName
         .split(' ')
         .map((w) => w[0])
         .join('')
         .substring(0, 2)
         .toUpperCase();
 
+      let backendUserId: string | undefined;
+
+      // Validate & persist to backend PostgreSQL first when available
+      try {
+        const isUp = await apiClient.isBackendAvailable();
+        if (isUp) {
+          const res = await apiClient.post<any>('/auth/register', {
+            name: cleanName,
+            email: cleanEmail,
+            password: password,
+            role: role,
+            employee_id: generatedEmpNo
+          });
+          if (!res.success) {
+            return {
+              success: false,
+              error: res.error || 'Pendaftaran gagal. Email atau nama employee sudah terdaftar.'
+            };
+          }
+          if (res.data?.user?.id) {
+            backendUserId = res.data.user.id;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend register sync warning:', err);
+      }
+
       // Create employee item
       const newEmp: EmployeeItem = {
         id: newEmpId,
         employeeNo: generatedEmpNo,
-        name: name.trim(),
+        name: cleanName,
         level: role === 'Admin' ? 'Head' : role === 'SPV' ? 'SPV' : 'Junior',
         email: cleanEmail,
         phone: '-',
@@ -732,10 +774,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       // Create user
       const newUser: User = {
-        id: `usr_${Date.now()}`,
+        id: backendUserId || `usr_${Date.now()}`,
         userId: generatedEmpNo,
         employeeId: newEmpId,
-        name: name.trim(),
+        name: cleanName,
         email: cleanEmail,
         role: role,
         status: 'active',
@@ -745,35 +787,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         avatarText: initials,
         phone: '-',
         createdAt: new Date().toISOString(),
-        lastLogin: 'Belum pernah login',
+        lastLogin: '',
         password: password
       };
 
       setUsers((prev) => [newUser, ...prev]);
 
-      // Persist directly to backend PostgreSQL
-      try {
-        const isUp = await apiClient.isBackendAvailable();
-        if (isUp) {
-          const res = await apiClient.post<any>('/auth/register', {
-            name: name.trim(),
-            email: cleanEmail,
-            password: password,
-            role: role,
-            employee_id: generatedEmpNo
-          });
-          if (res.data?.user?.id) {
-            newUser.id = res.data.user.id;
-          }
-        }
-      } catch (err) {
-        console.warn('Backend register sync warning:', err);
-      }
-
       addActivityLog('REGISTER_USER', 'auth', `Pendaftaran mandiri: ${newUser.name} (${cleanEmail}) terdaftar sebagai ${role}`);
       return { success: true, user: newUser };
     },
-    [users, addActivityLog]
+    [users, employees, addActivityLog]
   );
 
   const logout = useCallback(async () => {
