@@ -516,17 +516,18 @@ export const Dashboard: React.FC = () => {
                     key={col.code}
                     className="bg-white dark:bg-[#18181A] rounded-xl border border-slate-200/80 dark:border-white/10 overflow-hidden flex flex-col shadow-xs"
                   >
-                    {/* Column Header: Jobdesk Code with colored border */}
+                    {/* Column Header: Jobdesk Code matching Jobdesk Master style */}
                     <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-white dark:bg-[#18181A] flex items-center justify-between gap-2">
-                      <h3
+                      <span
                         style={{
+                          backgroundColor: badgeBorderColor,
                           borderColor: badgeBorderColor,
-                          backgroundColor: `${badgeBorderColor}14`
+                          color: col.textColor || getContrastTextColor(badgeBorderColor)
                         }}
-                        className="text-xs font-black font-mono text-[#202020] dark:text-white px-2.5 py-0.5 rounded-lg border-2 truncate"
+                        className="text-xs font-black font-mono px-3 py-1 rounded-xl border shadow-xs truncate"
                       >
                         {col.code}
-                      </h3>
+                      </span>
                       <span className="shrink-0 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300">
                         {col.items.length} Staff
                       </span>
