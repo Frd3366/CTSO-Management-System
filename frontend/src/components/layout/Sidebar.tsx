@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
 import { GlobalSearchModal } from './GlobalSearchModal';
+import cmsLogo from '../../assets/cms-logo.jpeg';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -171,10 +172,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         <div className={`h-16 flex items-center ${isCollapsed ? 'justify-center px-2' : 'justify-between px-4'} border-b border-slate-200 dark:border-white/10 shrink-0`}>
-          <NavLink to="/dashboard" aria-label="Dashboard CMS" className="flex items-center gap-3 overflow-hidden group">
-            <div className="w-8 h-8 rounded-xl bg-[#111111] text-[#F9C900] font-black text-xs flex items-center justify-center shrink-0 shadow-2xs border border-black/15 dark:border-[#F9C900]/30 transition-transform group-hover:scale-105">
-              CMS
-            </div>
+          <NavLink to="/dashboard" aria-label="Dashboard CMS" className="flex items-center gap-2.5 overflow-hidden group">
+            <img
+              src={cmsLogo}
+              alt="CMS Logo"
+              className="w-9 h-9 rounded-xl object-cover shrink-0 shadow-2xs border border-black/10 dark:border-white/10 transition-transform group-hover:scale-105"
+            />
             {!isCollapsed && (
               <div className="flex flex-col truncate">
                 <span className="font-black text-sm tracking-tight text-[#111111] dark:text-[#F2F4F7] leading-none">

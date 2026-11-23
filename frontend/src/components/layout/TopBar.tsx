@@ -5,6 +5,7 @@ import { useToast } from '../../context/ToastContext';
 import { useTheme } from '../../context/ThemeContext';
 import { NotificationPopover } from './NotificationPopover';
 import { GlobalSearchModal } from './GlobalSearchModal';
+import cmsLogo from '../../assets/cms-logo.jpeg';
 import {
   LayoutDashboard,
   CalendarDays,
@@ -156,10 +157,11 @@ export const TopBar: React.FC = () => {
             </button>
 
             <NavLink to="/dashboard" className="flex items-center gap-2 group">
-              {/* Logo emblem: constant in both light and dark mode, never inverts (Point 4) */}
-              <div className="w-7 h-7 rounded-lg bg-[#111111] text-[#F9C900] font-black text-[10px] flex items-center justify-center shadow-2xs border border-black/15 dark:border-[#F9C900]/30 transition-transform group-hover:scale-105">
-                CMS
-              </div>
+              <img
+                src={cmsLogo}
+                alt="CMS Logo"
+                className="w-8 h-8 rounded-lg object-cover shadow-2xs border border-black/10 dark:border-white/10 transition-transform group-hover:scale-105"
+              />
               <div className="flex flex-col">
                 <span className="font-black text-xs tracking-tight text-[#111111] dark:text-[#F2F4F7] leading-none">
                   CMS

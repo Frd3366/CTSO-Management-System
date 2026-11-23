@@ -5,6 +5,7 @@ import { TopRightNotification } from './TopRightNotification';
 import { ToastContainer } from '../common/ToastContainer';
 import { useAuth } from '../../context/AuthContext';
 import { Megaphone, X, Menu } from 'lucide-react';
+import cmsLogo from '../../assets/cms-logo.jpeg';
 
 export const AppLayout: React.FC = () => {
   const { announcements } = useAuth();
@@ -106,9 +107,11 @@ export const AppLayout: React.FC = () => {
             <Menu className="w-5 h-5" aria-hidden="true" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-lg bg-[#111111] text-[#F9C900] font-black text-[10px] flex items-center justify-center border border-black/15 dark:border-[#F9C900]/30">
-              CMS
-            </div>
+            <img
+              src={cmsLogo}
+              alt="CMS Logo"
+              className="w-7 h-7 rounded-lg object-cover border border-black/10 dark:border-white/10"
+            />
             <span className="font-black text-xs text-[#111111] dark:text-white">CMS</span>
           </div>
           <div className="w-8" aria-hidden="true" />

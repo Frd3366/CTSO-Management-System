@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, UserPlus, LogIn, User as UserIcon, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
+import cmsLogo from '../assets/cms-logo.jpeg';
 
 export const Login: React.FC = () => {
   const { login, register, isAuthenticated } = useAuth();
@@ -119,10 +120,12 @@ export const Login: React.FC = () => {
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
         {/* Brand Header */}
-        <div className="w-full text-center mb-6 space-y-2">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-2xl bg-[#111111] text-[#F9C900] font-black text-xl shadow-lg border border-white/20 ring-4 ring-black/10">
-            CT
-          </div>
+        <div className="w-full text-center mb-6 space-y-2.5">
+          <img
+            src={cmsLogo}
+            alt="CMS Logo"
+            className="w-16 h-16 mx-auto rounded-2xl object-cover shadow-lg border border-white/30 ring-4 ring-black/10"
+          />
           <div>
             <h1 className="text-xl font-black text-white drop-shadow-md tracking-tight">
               CTSO MANAGEMENT SYSTEM
