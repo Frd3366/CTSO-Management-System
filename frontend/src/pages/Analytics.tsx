@@ -1018,8 +1018,10 @@ export const Analytics: React.FC = () => {
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-1.5 px-2 text-xs font-bold text-slate-800 dark:text-white capitalize min-w-[130px] justify-center">
-              <Calendar className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" />
+            <div className="flex items-center gap-2 px-2 text-xs font-bold text-[#202020] dark:text-white capitalize min-w-[140px] justify-center">
+              <div className="w-6 h-6 rounded-lg bg-[#FFE160]/25 text-[#202020] dark:text-[#FFD416] flex items-center justify-center shrink-0">
+                <Calendar className="w-3.5 h-3.5 text-[#202020] dark:text-[#FFD416]" />
+              </div>
               <span>{monthName}</span>
             </div>
             <button

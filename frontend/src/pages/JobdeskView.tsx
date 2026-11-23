@@ -502,8 +502,10 @@ export const JobdeskView: React.FC = () => {
             <ChevronLeft className="w-4 h-4" aria-hidden="true" />
           </button>
 
-          <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 text-xs font-bold text-[#0F172A] dark:text-white font-mono">
-            <CalendarIcon className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400" aria-hidden="true" />
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202020] text-xs font-bold text-[#202020] dark:text-white font-mono shadow-2xs">
+            <div className="w-6 h-6 rounded-lg bg-[#FFE160]/25 text-[#202020] dark:text-[#FFD416] flex items-center justify-center shrink-0">
+              <CalendarIcon className="w-3.5 h-3.5 text-[#202020] dark:text-[#FFD416]" aria-hidden="true" />
+            </div>
             <span>
               {viewMode === 'daily' && formatDateDMY(currentDateStr)}
               {viewMode === 'weekly' && `${formatDateDMY(weeklyDays[0]?.iso)} – ${formatDateDMY(weeklyDays[6]?.iso)}`}

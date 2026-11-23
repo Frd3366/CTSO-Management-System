@@ -575,8 +575,10 @@ export const ShiftSchedule: React.FC = () => {
               />
             </div>
           ) : (
-            <div className="flex items-center gap-2 px-3.5 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202020] text-xs font-bold text-[#202020] dark:text-white font-mono shadow-2xs">
-              <CalendarIcon className="w-3.5 h-3.5 text-[#FFD416]" aria-hidden="true" />
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202020] text-xs font-bold text-[#202020] dark:text-white font-mono shadow-2xs">
+              <div className="w-6 h-6 rounded-lg bg-[#FFE160]/25 text-[#202020] dark:text-[#FFD416] flex items-center justify-center shrink-0">
+                <CalendarIcon className="w-3.5 h-3.5 text-[#202020] dark:text-[#FFD416]" aria-hidden="true" />
+              </div>
               <span>
                 {viewMode === 'weekly' && `${formatDateDMY(weeklyDays[0]?.iso)} – ${formatDateDMY(weeklyDays[6]?.iso)}`}
                 {viewMode === 'monthly' &&
