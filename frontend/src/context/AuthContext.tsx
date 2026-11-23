@@ -207,8 +207,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [shifts, setShifts] = useState<ShiftMasterItem[]>(() =>
     loadState<ShiftMasterItem[]>('shifts', INITIAL_SHIFTS)
   );
+  const sortJobdesksByCode = (list: JobdeskItem[]): JobdeskItem[] =>
+    [...list].sort((a, b) =>
+      (a.code || '').localeCompare(b.code || '', undefined, { numeric: true, sensitivity: 'base' })
+    );
+
   const [jobdesks, setJobdesks] = useState<JobdeskItem[]>(() =>
-    loadState<JobdeskItem[]>('jobdesks', INITIAL_JOBDESKS)
+    sortJobdesksByCode(loadState<JobdeskItem[]>('jobdesks', INITIAL_JOBDESKS))
   );
   const [teams] = useState<Team[]>(INITIAL_TEAMS);
   const [locations] = useState<LocationItem[]>(INITIAL_LOCATIONS);
@@ -392,8 +397,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             saveState('shifts', res.shifts);
           }
           if (res.jobdesks && res.jobdesks.length > 0) {
-            setJobdesks(res.jobdesks);
-            saveState('jobdesks', res.jobdesks);
+            const sortedJds = sortJobdesksByCode(res.jobdesks);
+            setJobdesks(sortedJds);
+            saveState('jobdesks', sortedJds);
           }
           if (res.announcements && res.announcements.length > 0) {
             setAnnouncements(res.announcements);
@@ -2050,7 +2056,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addJobdesk = useCallback(
     (jobdesk: Omit<JobdeskItem, 'id'>) => {
       const newJd: JobdeskItem = { ...jobdesk, id: `jd_${Date.now()}` };
-      setJobdesks((prev) => [...prev, newJd]);
+      setJobdesks((prev) => sortJobdesksByCode([...prev, newJd]));
 
       apiClient.isBackendAvailable().then((isUp) => {
         if (isUp) {
@@ -2077,7 +2083,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         if (found && jobdesk.code && jobdesk.code !== found.code) {
           oldCode = found.code;
         }
-        return prev.map((j) => (j.id === id ? { ...j, ...jobdesk } : j));
+        return sortJobdesksByCode(prev.map((j) => (j.id === id ? { ...j, ...jobdesk } : j)));
       });
       if (oldCode && jobdesk.code) {
         const newCode = jobdesk.code;

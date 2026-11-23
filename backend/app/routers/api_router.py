@@ -17,7 +17,12 @@ from ..schemas import (
     AnnouncementCreate, ActivityLogCreate, HolidayCreate
 )
 
+import re
+
 router = APIRouter()
+
+def _natural_code_key(code: str):
+    return [int(t) if t.isdigit() else t.lower() for t in re.split(r"(\d+)", (code or "").strip())]
 
 # ==========================================
 # EMPLOYEES
@@ -165,7 +170,7 @@ def delete_shift(shift_id: str, db: Session = Depends(get_db)):
 # ==========================================
 @router.get("/jobdesks")
 def get_jobdesks(db: Session = Depends(get_db)):
-    items = db.query(JobdeskModel).all()
+    items = sorted(db.query(JobdeskModel).all(), key=lambda j: _natural_code_key(j.code))
     return [
         {
             "id": j.id,
@@ -563,7 +568,7 @@ def pull_all_data(db: Session = Depends(get_db)):
             "isActive": j.is_active,
             "status": "active" if j.is_active else "inactive"
         }
-        for j in db.query(JobdeskModel).all()
+        for j in sorted(db.query(JobdeskModel).all(), key=lambda j: _natural_code_key(j.code))
     ]
     schedules = [
         {
