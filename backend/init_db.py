@@ -9,6 +9,7 @@ Initialize CMS Database with Clean / Empty State:
 
 import sys
 import json
+from sqlalchemy import text
 from app.database import engine, SessionLocal, Base
 from app.models import UserModel, ShiftModel, JobdeskModel, PermissionModel
 from app.security import get_password_hash
@@ -16,6 +17,15 @@ from app.security import get_password_hash
 def init_database():
     print("Creating all database tables...")
     Base.metadata.create_all(bind=engine)
+
+    # Auto-migrate existing tables before any ORM queries run
+    print("Verifying schema columns...")
+    with engine.connect() as conn:
+        conn.execute(text("ALTER TABLE schedules ADD COLUMN IF NOT EXISTS note TEXT;"))
+        conn.execute(text("ALTER TABLE schedules ADD COLUMN IF NOT EXISTS agent VARCHAR;"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;"))
+        conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS level VARCHAR DEFAULT 'Junior';"))
+        conn.commit()
 
     db = SessionLocal()
     try:
