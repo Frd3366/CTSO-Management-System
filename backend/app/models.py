@@ -15,6 +15,7 @@ class UserModel(Base):
     password_hash = Column(String, nullable=False)
     role = Column(String, nullable=False, default="Employee")  # Admin, SPV, Employee
     employee_id = Column(String, nullable=True)
+    last_login = Column(DateTime, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class EmployeeModel(Base):
@@ -23,7 +24,8 @@ class EmployeeModel(Base):
     id = Column(String, primary_key=True, default=gen_uuid)
     employee_no = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
-    role = Column(String, nullable=False, default="CTSO Staff")
+    role = Column(String, nullable=False, default="Employee")
+    level = Column(String, nullable=True, default="Junior")
     status = Column(String, default="active")  # active, inactive
     default_location = Column(String, default="Badung")  # Badung, Denpasar, Bandung
     email = Column(String, nullable=True)

@@ -8,11 +8,13 @@ from .database import engine, Base
 # Auto create tables if not present
 Base.metadata.create_all(bind=engine)
 
-# Auto migrate schema for existing databases (adds note column if not present)
+# Auto migrate schema for existing databases
 try:
     with engine.connect() as conn:
         conn.execute(text("ALTER TABLE schedules ADD COLUMN IF NOT EXISTS note TEXT;"))
         conn.execute(text("ALTER TABLE schedules ADD COLUMN IF NOT EXISTS agent VARCHAR;"))
+        conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;"))
+        conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS level VARCHAR DEFAULT 'Junior';"))
         conn.commit()
 except Exception:
     pass

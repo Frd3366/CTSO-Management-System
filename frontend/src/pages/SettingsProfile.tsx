@@ -99,12 +99,12 @@ export const SettingsProfile: React.FC = () => {
               <strong className="text-[#111111] dark:text-[#F9C900]">{currentUser?.role}</strong>
             </div>
             <div className="flex justify-between">
-              <span className="text-slate-400 dark:text-slate-500">Jabatan:</span>
+              <span className="text-slate-400 dark:text-slate-500">Level:</span>
               <span className="font-semibold text-slate-800 dark:text-slate-200">{userJabatan}</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-400 dark:text-slate-500">Status:</span>
-              <span className="font-bold text-emerald-700 dark:text-emerald-400">Aktif</span>
+              <span className="font-bold text-emerald-700 dark:text-emerald-400">Active</span>
             </div>
           </div>
         </div>

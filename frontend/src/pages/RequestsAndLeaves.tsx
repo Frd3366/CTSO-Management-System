@@ -425,7 +425,13 @@ export const RequestsAndLeaves: React.FC = () => {
           >
             <ArrowLeftRight className="w-3.5 h-3.5" />
             <span>Shift & Roster Changes</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-white/10 font-mono">
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                activeSection === 'shifts'
+                  ? 'bg-white text-[#202020] dark:bg-[#202020] dark:text-[#FFD416]'
+                  : 'bg-slate-200 text-[#202020] dark:bg-white/10 dark:text-gray-300'
+              }`}
+            >
               {filteredShiftRequests.length}
             </span>
           </button>
@@ -441,7 +447,13 @@ export const RequestsAndLeaves: React.FC = () => {
           >
             <CalendarOff className="w-3.5 h-3.5" />
             <span>Time Off & Leaves</span>
-            <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-slate-200 dark:bg-white/10 font-mono">
+            <span
+              className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
+                activeSection === 'leaves'
+                  ? 'bg-white text-[#202020] dark:bg-[#202020] dark:text-[#FFD416]'
+                  : 'bg-slate-200 text-[#202020] dark:bg-white/10 dark:text-gray-300'
+              }`}
+            >
               {filteredLeaves.length}
             </span>
           </button>

@@ -156,12 +156,12 @@ export const GoogleSheetsBackupModal: React.FC<GoogleSheetsBackupModalProps> = (
               </span>
               <span className="text-[11px] text-slate-600 dark:text-slate-300">
                 {config.enabled
-                  ? `Aktif: Otomatis mengupdate Google Sheets setiap ${
+                  ? `Active: Otomatis mengupdate Google Sheets setiap ${
                       config.intervalMinutes === 60
                         ? '1 Jam'
                         : `${config.intervalMinutes} Menit`
                     }`
-                  : 'Nonaktif: Aktifkan untuk backup otomatis berkala'}
+                  : 'Inactive: Aktifkan untuk backup otomatis berkala'}
               </span>
             </div>
             <button

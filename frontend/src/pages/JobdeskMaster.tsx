@@ -167,7 +167,7 @@ export const JobdeskMaster: React.FC = () => {
                       : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'
                   }`}
                 >
-                  {jd.status === 'active' ? 'Aktif' : 'Arsip'}
+                  {jd.status === 'active' ? 'Active' : 'Inactive'}
                 </span>
               </div>
               <div className="mt-2 flex flex-wrap gap-1.5" aria-label={`Tugas ${jd.code}`}>
@@ -325,8 +325,8 @@ export const JobdeskMaster: React.FC = () => {
                 onChange={(e) => setFormStatus(e.target.value as any)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-[#18181A] text-slate-900 dark:text-white"
               >
-                <option value="active">Aktif</option>
-                <option value="inactive">Nonaktif</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
             <div>

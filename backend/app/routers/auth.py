@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from datetime import datetime
 import uuid
 from ..database import get_db
 from ..models import UserModel, EmployeeModel
@@ -73,6 +74,11 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
             detail="Email / Username atau password salah."
         )
 
+    # Record real-time login timestamp
+    user.last_login = datetime.utcnow()
+    db.commit()
+    db.refresh(user)
+
     token = create_access_token({
         "sub": user.id,
         "email": user.email,
@@ -88,7 +94,8 @@ def login(req: LoginRequest, db: Session = Depends(get_db)):
             "email": user.email,
             "name": user.name,
             "role": user.role,
-            "employeeId": user.employee_id
+            "employeeId": user.employee_id,
+            "lastLogin": user.last_login.isoformat() + "Z" if user.last_login else None
         }
     }
 
@@ -102,6 +109,7 @@ def get_users(db: Session = Depends(get_db), current_user: UserModel = Depends(g
             "name": u.name,
             "role": u.role,
             "employeeId": u.employee_id,
+            "lastLogin": u.last_login.isoformat() + "Z" if u.last_login else None,
             "createdAt": u.created_at.isoformat() if u.created_at else None
         }
         for u in users

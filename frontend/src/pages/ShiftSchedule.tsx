@@ -488,7 +488,7 @@ export const ShiftSchedule: React.FC = () => {
                 {gsheetsConfig.enabled && (
                   <span
                     className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#202020]"
-                    title="Auto Backup Aktif"
+                    title="Auto Backup Active"
                   />
                 )}
               </button>

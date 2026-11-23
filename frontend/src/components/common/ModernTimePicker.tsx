@@ -1,5 +1,6 @@
-import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Clock, ChevronDown, Check, ChevronUp } from 'lucide-react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { createPortal } from 'react-dom';
+import { Clock, ChevronDown } from 'lucide-react';
 
 export interface ModernTimePickerProps {
   value: string; // HH:mm format, e.g. "07:00"
@@ -32,7 +33,13 @@ export const ModernTimePicker: React.FC<ModernTimePickerProps> = ({
   align = 'left'
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const popoverRef = useRef<HTMLDivElement>(null);
+  const [coords, setCoords] = useState<{ top: number; left: number; width: number }>({
+    top: 0,
+    left: 0,
+    width: 312
+  });
 
   // Parse hours and minutes
   const [hours, minutes] = useMemo(() => {
@@ -41,10 +48,59 @@ export const ModernTimePicker: React.FC<ModernTimePickerProps> = ({
     return [parts[0].padStart(2, '0'), parts[1].padStart(2, '0')];
   }, [value]);
 
+  const updatePosition = useCallback(() => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const margin = 12;
+    const popoverWidth = Math.min(vw < 640 ? 296 : 316, vw - margin * 2);
+    const popoverHeight = popoverRef.current?.offsetHeight || 390;
+
+    let left = align === 'right' ? rect.right - popoverWidth : rect.left;
+    if (left + popoverWidth > vw - margin) {
+      left = vw - popoverWidth - margin;
+    }
+    if (left < margin) {
+      left = margin;
+    }
+
+    const spaceBelow = vh - rect.bottom - margin;
+    const spaceAbove = rect.top - margin;
+    let top: number;
+    if (spaceBelow >= popoverHeight || spaceBelow >= spaceAbove) {
+      top = Math.min(rect.bottom + 8, vh - popoverHeight - margin);
+    } else {
+      top = Math.max(margin, rect.top - popoverHeight - 8);
+    }
+    if (top < margin) top = margin;
+
+    setCoords({ top, left, width: popoverWidth });
+  }, [align]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    updatePosition();
+    const raf = requestAnimationFrame(updatePosition);
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isOpen, updatePosition]);
+
   // Click outside to close
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (
+        triggerRef.current &&
+        !triggerRef.current.contains(target) &&
+        popoverRef.current &&
+        !popoverRef.current.contains(target)
+      ) {
         setIsOpen(false);
       }
     };
@@ -93,7 +149,7 @@ export const ModernTimePicker: React.FC<ModernTimePickerProps> = ({
   const allMinutes = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 
   return (
-    <div className={`relative inline-block w-full text-left ${className}`} ref={containerRef}>
+    <div className={`relative inline-block w-full text-left ${className}`}>
       {label && (
         <label className="block text-xs font-bold text-[#202020] dark:text-gray-200 mb-1.5 flex items-center justify-between">
           <span>{label}</span>
@@ -103,6 +159,7 @@ export const ModernTimePicker: React.FC<ModernTimePickerProps> = ({
 
       {/* Modern Trigger Button */}
       <button
+        ref={triggerRef}
         type="button"
         disabled={disabled}
         onClick={() => !disabled && setIsOpen((prev) => !prev)}
@@ -136,157 +193,166 @@ export const ModernTimePicker: React.FC<ModernTimePickerProps> = ({
         />
       </button>
 
-      {/* Floating Popover Time Dropdown */}
-      {isOpen && (
-        <div
-          className={`absolute top-full mt-2 z-50 w-72 sm:w-80 bg-white dark:bg-[#202020] rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-[0_12px_36px_-6px_rgba(0,0,0,0.18)] p-3.5 animate-fade-in ${
-            align === 'right' ? 'right-0' : 'left-0'
-          }`}
-          role="dialog"
-          aria-label="Pilih Jam Operasional"
-        >
-          {/* Shift Quick Presets Chips */}
-          <div className="mb-3 pb-2.5 border-b border-slate-100 dark:border-white/10">
-            <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-400 mb-1.5">
-              Preset Shift Operasional
+      {/* Viewport-Safe Portaled Popover Time Dropdown */}
+      {isOpen &&
+        typeof document !== 'undefined' &&
+        createPortal(
+          <div
+            ref={popoverRef}
+            style={{
+              position: 'fixed',
+              top: `${coords.top}px`,
+              left: `${coords.left}px`,
+              width: `${coords.width}px`,
+              zIndex: 9999
+            }}
+            className="bg-white dark:bg-[#202020] rounded-2xl border border-slate-200/90 dark:border-white/15 shadow-[0_16px_44px_-6px_rgba(0,0,0,0.22)] p-3.5 animate-fade-in"
+            role="dialog"
+            aria-label="Pilih Jam Operasional"
+          >
+            {/* Shift Quick Presets Chips */}
+            <div className="mb-3 pb-2.5 border-b border-slate-100 dark:border-white/10">
+              <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-gray-400 mb-1.5">
+                Preset Shift Operasional
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                {SHIFT_TIME_PRESETS.map((preset) => (
+                  <button
+                    key={preset.value}
+                    type="button"
+                    onClick={() => {
+                      onChange(preset.value);
+                    }}
+                    className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-left transition-all ${
+                      value === preset.value
+                        ? 'bg-[#FFD416] text-[#202020] shadow-2xs font-black ring-1 ring-[#FFD416]'
+                        : 'bg-[#F4F4F4] dark:bg-white/5 hover:bg-[#FFE160] hover:text-[#202020] text-slate-700 dark:text-gray-200'
+                    }`}
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {SHIFT_TIME_PRESETS.map((preset) => (
-                <button
-                  key={preset.value}
-                  type="button"
-                  onClick={() => {
-                    onChange(preset.value);
-                  }}
-                  className={`px-2 py-1.5 rounded-lg text-[10px] font-bold text-left transition-all ${
-                    value === preset.value
-                      ? 'bg-[#FFD416] text-[#202020] shadow-2xs font-black ring-1 ring-[#FFD416]'
-                      : 'bg-[#F4F4F4] dark:bg-white/5 hover:bg-[#FFE160] hover:text-[#202020] text-slate-700 dark:text-gray-200'
-                  }`}
-                >
-                  {preset.label}
-                </button>
-              ))}
-            </div>
-          </div>
 
-          {/* Interactive Digital Hour & Minute Selector */}
-          <div className="grid grid-cols-2 gap-2 text-center">
-            {/* Hours Column */}
-            <div>
-              <div className="flex items-center justify-between px-1 mb-1">
-                <span className="text-[11px] font-bold text-[#202020] dark:text-white uppercase tracking-wider">
-                  Jam
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={(e) => handleAdjustHour(-1, e)}
-                    className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
-                    title="-1 Jam"
-                  >
-                    -1
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleAdjustHour(1, e)}
-                    className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
-                    title="+1 Jam"
-                  >
-                    +1
-                  </button>
+            {/* Interactive Digital Hour & Minute Selector */}
+            <div className="grid grid-cols-2 gap-2 text-center">
+              {/* Hours Column */}
+              <div>
+                <div className="flex items-center justify-between px-1 mb-1">
+                  <span className="text-[11px] font-bold text-[#202020] dark:text-white uppercase tracking-wider">
+                    Jam
+                  </span>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={(e) => handleAdjustHour(-1, e)}
+                      className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
+                      title="-1 Jam"
+                    >
+                      -1
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleAdjustHour(1, e)}
+                      className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
+                      title="+1 Jam"
+                    >
+                      +1
+                    </button>
+                  </div>
+                </div>
+
+                <div className="h-44 overflow-y-auto rounded-xl border border-slate-200/80 dark:border-white/10 p-1 space-y-1 bg-[#F4F4F4]/50 dark:bg-black/20 scrollbar-thin">
+                  {allHours.map((h) => {
+                    const isSelected = h === hours;
+                    return (
+                      <button
+                        key={h}
+                        type="button"
+                        onClick={() => handleSelectHour(h)}
+                        className={`w-full py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                          isSelected
+                            ? 'bg-[#FFD416] text-[#202020] shadow-2xs font-black'
+                            : 'hover:bg-[#FFE160]/40 text-slate-700 dark:text-gray-300'
+                        }`}
+                      >
+                        {h}:00
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
-              <div className="h-44 overflow-y-auto rounded-xl border border-slate-200/80 dark:border-white/10 p-1 space-y-1 bg-[#F4F4F4]/50 dark:bg-black/20 scrollbar-thin">
-                {allHours.map((h) => {
-                  const isSelected = h === hours;
-                  return (
+              {/* Minutes Column */}
+              <div>
+                <div className="flex items-center justify-between px-1 mb-1">
+                  <span className="text-[11px] font-bold text-[#202020] dark:text-white uppercase tracking-wider">
+                    Menit
+                  </span>
+                  <div className="flex items-center gap-1">
                     <button
-                      key={h}
                       type="button"
-                      onClick={() => handleSelectHour(h)}
-                      className={`w-full py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                        isSelected
-                          ? 'bg-[#FFD416] text-[#202020] shadow-2xs font-black'
-                          : 'hover:bg-[#FFE160]/40 text-slate-700 dark:text-gray-300'
-                      }`}
+                      onClick={(e) => handleAdjustMinute(-15, e)}
+                      className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
+                      title="-15 Menit"
                     >
-                      {h}:00
+                      -15
                     </button>
-                  );
-                })}
-              </div>
-            </div>
+                    <button
+                      type="button"
+                      onClick={(e) => handleAdjustMinute(15, e)}
+                      className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
+                      title="+15 Menit"
+                    >
+                      +15
+                    </button>
+                  </div>
+                </div>
 
-            {/* Minutes Column */}
-            <div>
-              <div className="flex items-center justify-between px-1 mb-1">
-                <span className="text-[11px] font-bold text-[#202020] dark:text-white uppercase tracking-wider">
-                  Menit
-                </span>
-                <div className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={(e) => handleAdjustMinute(-15, e)}
-                    className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
-                    title="-15 Menit"
-                  >
-                    -15
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => handleAdjustMinute(15, e)}
-                    className="p-0.5 rounded hover:bg-[#F4F4F4] dark:hover:bg-white/10 text-slate-500 dark:text-gray-300"
-                    title="+15 Menit"
-                  >
-                    +15
-                  </button>
+                <div className="h-44 overflow-y-auto rounded-xl border border-slate-200/80 dark:border-white/10 p-1 space-y-1 bg-[#F4F4F4]/50 dark:bg-black/20 scrollbar-thin">
+                  {allMinutes.map((m) => {
+                    const isSelected = m === minutes;
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => handleSelectMinute(m)}
+                        className={`w-full py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
+                          isSelected
+                            ? 'bg-[#FFD416] text-[#202020] shadow-2xs font-black'
+                            : 'hover:bg-[#FFE160]/40 text-slate-700 dark:text-gray-300'
+                        }`}
+                      >
+                        :{m}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+            </div>
 
-              <div className="h-44 overflow-y-auto rounded-xl border border-slate-200/80 dark:border-white/10 p-1 space-y-1 bg-[#F4F4F4]/50 dark:bg-black/20 scrollbar-thin">
-                {allMinutes.map((m) => {
-                  const isSelected = m === minutes;
-                  return (
-                    <button
-                      key={m}
-                      type="button"
-                      onClick={() => handleSelectMinute(m)}
-                      className={`w-full py-1.5 rounded-lg text-xs font-mono font-bold transition-all ${
-                        isSelected
-                          ? 'bg-[#FFD416] text-[#202020] shadow-2xs font-black'
-                          : 'hover:bg-[#FFE160]/40 text-slate-700 dark:text-gray-300'
-                      }`}
-                    >
-                      :{m}
-                    </button>
-                  );
-                })}
+            {/* Footer Preview & Confirm */}
+            <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/10 flex items-center justify-between">
+              <div className="font-mono text-xs">
+                <span className="text-slate-400 text-[10px]">Pilihan: </span>
+                <strong className="text-sm font-black text-[#202020] dark:text-white">
+                  {hours}:{minutes}
+                </strong>{' '}
+                <span className="text-[10px] text-slate-400 font-bold">WITA</span>
               </div>
-            </div>
-          </div>
 
-          {/* Footer Preview & Confirm */}
-          <div className="mt-3 pt-2.5 border-t border-slate-100 dark:border-white/10 flex items-center justify-between">
-            <div className="font-mono text-xs">
-              <span className="text-slate-400 text-[10px]">Pilihan: </span>
-              <strong className="text-sm font-black text-[#202020] dark:text-white">
-                {hours}:{minutes}
-              </strong>{' '}
-              <span className="text-[10px] text-slate-400 font-bold">WITA</span>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="px-3.5 py-1.5 rounded-xl bg-[#FFD416] hover:bg-[#FFE160] text-[#202020] text-xs font-black shadow-xs transition-colors cursor-pointer"
+              >
+                Terapkan
+              </button>
             </div>
-
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="px-3.5 py-1.5 rounded-xl bg-[#FFD416] hover:bg-[#FFE160] text-[#202020] text-xs font-black shadow-xs transition-colors cursor-pointer"
-            >
-              Terapkan
-            </button>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

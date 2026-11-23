@@ -190,7 +190,7 @@ export const ShiftMaster: React.FC = () => {
                       : 'bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-white/10'
                   }`}
                 >
-                  {sh.status === 'active' ? 'Aktif' : 'Arsip'}
+                  {sh.status === 'active' ? 'Active' : 'Inactive'}
                 </span>
               </div>
 
@@ -355,7 +355,7 @@ export const ShiftMaster: React.FC = () => {
                 onChange={(e) => setFormStatus(e.target.checked ? 'active' : 'inactive')}
                 className="rounded text-[#111111] focus:ring-orange-500"
               />
-              <span>Status Aktif</span>
+              <span>Status Active</span>
             </label>
           </div>
 

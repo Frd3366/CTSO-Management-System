@@ -144,13 +144,13 @@ export const Reports: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsGSheetsModalOpen(true)}
-              className="px-3.5 py-1.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-bold flex items-center gap-1.5 transition-colors shadow-2xs"
+              className="px-3.5 py-1.5 rounded-xl border border-slate-300 dark:border-white/20 bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-700 dark:text-gray-200 text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-2xs"
               title="Konfigurasi Auto Backup Google Sheets"
             >
-              <FileSpreadsheet className="w-3.5 h-3.5" />
+              <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" />
               <span>Auto Backup Sheets</span>
               {gsheetsConfig.enabled && (
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="w-1.5 h-1.5 rounded-full bg-[#FFD416] animate-pulse" />
               )}
             </button>
           )}

@@ -26,7 +26,8 @@ class UserCreate(BaseModel):
 class EmployeeCreate(BaseModel):
     employee_no: str
     name: str
-    role: str = "CTSO Staff"
+    role: str = "Employee"
+    level: Optional[str] = "Junior"
     status: str = "active"
     default_location: str = "Badung"
     email: Optional[str] = None
@@ -36,6 +37,7 @@ class EmployeeUpdate(BaseModel):
     employee_no: Optional[str] = None
     name: Optional[str] = None
     role: Optional[str] = None
+    level: Optional[str] = None
     status: Optional[str] = None
     default_location: Optional[str] = None
     email: Optional[str] = None

@@ -358,7 +358,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 {!isCollapsed && (
                   <div className="flex flex-col text-left truncate">
                     <span className="text-xs font-bold text-[#111111] dark:text-white truncate">
-                      {currentUser?.name?.split(' ')[0]}
+                      {currentUser?.name?.trim().split(/\s+/).slice(0, 3).join(' ')}
                     </span>
                     <span className="text-[10px] text-slate-600 dark:text-gray-300 font-mono">
                       {currentUser?.role}

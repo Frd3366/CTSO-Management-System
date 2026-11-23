@@ -31,6 +31,7 @@ def get_employees(db: Session = Depends(get_db)):
             "employeeNo": e.employee_no,
             "name": e.name,
             "role": e.role,
+            "level": e.level or "Junior",
             "status": e.status,
             "defaultLocation": e.default_location,
             "email": e.email,
@@ -481,6 +482,7 @@ def pull_all_data(db: Session = Depends(get_db)):
             "role": u.role,
             "employeeId": u.employee_id,
             "status": "active",
+            "lastLogin": u.last_login.isoformat() + "Z" if u.last_login else None,
             "createdAt": u.created_at.isoformat() if u.created_at else None
         }
         for u in db.query(UserModel).all()
@@ -491,6 +493,7 @@ def pull_all_data(db: Session = Depends(get_db)):
             "employeeNo": e.employee_no,
             "name": e.name,
             "role": e.role,
+            "level": e.level or "Junior",
             "status": e.status,
             "defaultLocation": e.default_location,
             "email": e.email or "",
@@ -603,6 +606,8 @@ def push_all_data(payload: dict, db: Session = Depends(get_db), current_user: Us
             if exist:
                 exist.name = emp_data.get("name", exist.name)
                 exist.role = emp_data.get("role", exist.role)
+                if emp_data.get("level") is not None:
+                    exist.level = emp_data.get("level")
                 exist.status = emp_data.get("status", exist.status)
                 exist.default_location = emp_data.get("defaultLocation", exist.default_location)
                 exist.email = emp_email or exist.email
@@ -612,7 +617,8 @@ def push_all_data(payload: dict, db: Session = Depends(get_db), current_user: Us
                     id=emp_data.get("id"),
                     employee_no=emp_data.get("employeeNo", ""),
                     name=emp_data.get("name", ""),
-                    role=emp_data.get("role", "CTSO Staff"),
+                    role=emp_data.get("role", "Employee"),
+                    level=emp_data.get("level", "Junior"),
                     status=emp_data.get("status", "active"),
                     default_location=emp_data.get("defaultLocation", "Badung"),
                     email=emp_email,

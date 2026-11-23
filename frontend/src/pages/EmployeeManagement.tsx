@@ -24,6 +24,16 @@ import {
   Trash2
 } from 'lucide-react';
 
+const EMPLOYEE_LEVEL_OPTIONS = [
+  'Head',
+  'SPV',
+  'Senior',
+  'Intermediate',
+  'Junior',
+  'Training',
+  'Intership'
+] as const;
+
 export const EmployeeManagement: React.FC = () => {
   const { employees, teams, currentUser, addEmployee, updateEmployee, deleteEmployee, users, addUser, updateUser, deleteUser } = useAuth();
   const { showToast } = useToast();
@@ -43,7 +53,7 @@ export const EmployeeManagement: React.FC = () => {
   // Form Fields (PRD 7.1)
   const [formEmployeeNo, setFormEmployeeNo] = useState('');
   const [formName, setFormName] = useState('');
-  const [formLevel, setFormLevel] = useState('');
+  const [formLevel, setFormLevel] = useState<string>('Junior');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
   const [formTeamId, setFormTeamId] = useState('team_core');
@@ -59,10 +69,10 @@ export const EmployeeManagement: React.FC = () => {
   const filteredEmployees = useMemo(() => {
     return employees.filter((e) => {
       const matchSearch =
-        e.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.employeeNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.level.toLowerCase().includes(searchTerm.toLowerCase());
+        (e.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.employeeNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.level || '').toLowerCase().includes(searchTerm.toLowerCase());
       const matchStatus = statusFilter === 'All' || e.status === statusFilter;
       return matchSearch && matchStatus;
     });
@@ -76,7 +86,7 @@ export const EmployeeManagement: React.FC = () => {
     setEditingId(null);
     setFormEmployeeNo(`CTSO-${String(employees.length + 101).padStart(4, '0')}`);
     setFormName('');
-    setFormLevel('Technician');
+    setFormLevel('Junior');
     setFormEmail('');
     setFormPhone('');
     setFormTeamId(teams[0]?.id || 'team_core');
@@ -95,7 +105,8 @@ export const EmployeeManagement: React.FC = () => {
     setEditingId(emp.id);
     setFormEmployeeNo(emp.employeeNo);
     setFormName(emp.name);
-    setFormLevel(emp.level);
+    const validLevel = EMPLOYEE_LEVEL_OPTIONS.includes(emp.level as any) ? emp.level : 'Junior';
+    setFormLevel(validLevel);
     setFormEmail(emp.email);
     setFormPhone(emp.phone);
     setFormTeamId(emp.teamId);
@@ -298,7 +309,7 @@ export const EmployeeManagement: React.FC = () => {
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
             <input
               type="text"
-              placeholder="Cari ID, nama, jabatan..."
+              placeholder="Cari ID, nama, level..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8 pr-3 py-1.5 rounded-xl border border-[#CBD5E1] dark:border-white/10 bg-[#E7F0FE]/50 dark:bg-white/5 text-xs text-[#111111] dark:text-white placeholder-[#647084] dark:placeholder-gray-400 w-48 sm:w-64 focus:bg-white dark:focus:bg-[#18181A] focus:outline-none focus:border-[#F9C900] focus:ring-2 focus:ring-[#F9C900]/20"
@@ -312,8 +323,8 @@ export const EmployeeManagement: React.FC = () => {
             className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-gray-200 bg-white dark:bg-[#18181A] focus:outline-none"
           >
             <option value="All">Semua Status</option>
-            <option value="active">Aktif</option>
-            <option value="inactive">Nonaktif</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
 
@@ -330,8 +341,8 @@ export const EmployeeManagement: React.FC = () => {
               <tr>
                 <th className="py-3 px-4">Employee ID</th>
                 <th className="py-3 px-4">Nama Lengkap</th>
-                <th className="py-3 px-4">Jabatan</th>
-                <th className="py-3 px-4">Role Sistem</th>
+                <th className="py-3 px-4">Level</th>
+                <th className="py-3 px-4">Role Akun</th>
                 <th className="py-3 px-4">Kontak</th>
                 <th className="py-3 px-4 text-center">Status</th>
                 {isAdmin && <th className="py-3 px-4 text-right">Aksi</th>}
@@ -352,10 +363,9 @@ export const EmployeeManagement: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-bold text-slate-900 dark:text-white">{emp.name}</div>
-                      <div className="text-[10px] text-slate-400 dark:text-gray-400">Bergabung: {emp.joinDate}</div>
                     </td>
                     <td className="py-3 px-4 text-slate-700 dark:text-gray-300 font-medium">
-                      {emp.level}
+                      {emp.level || 'Junior'}
                     </td>
                     <td className="py-3 px-4">
                       <span
@@ -382,7 +392,7 @@ export const EmployeeManagement: React.FC = () => {
                             : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-400'
                         }`}
                       >
-                        {emp.status === 'active' ? 'Aktif' : 'Nonaktif'}
+                        {emp.status === 'active' ? 'Active' : 'Inactive'}
                       </span>
                     </td>
                     {isAdmin && (
@@ -404,7 +414,7 @@ export const EmployeeManagement: React.FC = () => {
                                 ? 'text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30'
                                 : 'text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30'
                             }`}
-                            title={emp.status === 'active' ? 'Nonaktifkan' : 'Aktifkan'}
+                            title={emp.status === 'active' ? 'Set Inactive' : 'Set Active'}
                           >
                             <PowerOff className="w-3.5 h-3.5" />
                           </button>
@@ -440,7 +450,7 @@ export const EmployeeManagement: React.FC = () => {
         <form onSubmit={handleSave} className="space-y-4">
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 mb-1">Employee ID</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Employee ID</label>
               <input
                 type="text"
                 value={formEmployeeNo}
@@ -463,15 +473,19 @@ export const EmployeeManagement: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Jabatan / Role</label>
-            <input
-              type="text"
+            <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Level</label>
+            <select
               value={formLevel}
               onChange={(e) => setFormLevel(e.target.value)}
-              placeholder="cth: Senior NOC Specialist"
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181A] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#F9C900]"
+              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181A] text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-[#F9C900]"
               required
-            />
+            >
+              {EMPLOYEE_LEVEL_OPTIONS.map((lvl) => (
+                <option key={lvl} value={lvl}>
+                  {lvl}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -501,7 +515,7 @@ export const EmployeeManagement: React.FC = () => {
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Role Sistem Akun</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Role Akun</label>
               <select
                 value={formRole}
                 onChange={(e) => setFormRole(e.target.value as any)}
@@ -519,8 +533,8 @@ export const EmployeeManagement: React.FC = () => {
                 onChange={(e) => setFormStatus(e.target.value as any)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181A] text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#F9C900]"
               >
-                <option value="active">Aktif</option>
-                <option value="inactive">Nonaktif</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
           </div>

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Modal } from '../components/common/Modal';
 import { User, UserRole, UserStatus, EmployeeItem } from '../types';
+import { apiClient } from '../api/client';
 import {
   UserCog,
   Plus,
@@ -20,9 +21,79 @@ import {
   Link as LinkIcon
 } from 'lucide-react';
 
+function formatRealTimeLastLogin(raw?: string, nowMs?: number): { primary: string; relative?: string } {
+  if (!raw || raw === 'Belum pernah login') {
+    return { primary: 'Belum pernah login' };
+  }
+  const parsed = new Date(raw);
+  if (isNaN(parsed.getTime())) {
+    return { primary: raw };
+  }
+  const now = nowMs ?? Date.now();
+  const diffSec = Math.max(0, Math.floor((now - parsed.getTime()) / 1000));
+
+  let relative = '';
+  if (diffSec < 60) {
+    relative = 'Baru saja';
+  } else if (diffSec < 3600) {
+    relative = `${Math.floor(diffSec / 60)} mnt lalu`;
+  } else if (diffSec < 86400) {
+    relative = `${Math.floor(diffSec / 3600)} jam lalu`;
+  } else {
+    relative = `${Math.floor(diffSec / 86400)} hari lalu`;
+  }
+
+  const formatted = new Intl.DateTimeFormat('id-ID', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: 'Asia/Makassar'
+  }).format(parsed);
+
+  return { primary: `${formatted} WITA`, relative };
+}
+
 export const UserManagement: React.FC = () => {
   const { users: accounts, addUser, updateUser, deleteUser, employees, addEmployee, updateEmployee, currentUser } = useAuth();
   const { showToast } = useToast();
+
+  const [nowMs, setNowMs] = useState<number>(() => Date.now());
+  const [liveLoginMap, setLiveLoginMap] = useState<Record<string, string>>({});
+
+  // Real-time refresh of relative time and backend last_login timestamps
+  useEffect(() => {
+    let active = true;
+    const fetchLiveLogins = async () => {
+      try {
+        const res = await apiClient.get<any[]>('/auth/users', []);
+        if (active && Array.isArray(res) && res.length > 0) {
+          const map: Record<string, string> = {};
+          res.forEach((u) => {
+            if (u.email && u.lastLogin) {
+              map[String(u.email).toLowerCase()] = u.lastLogin;
+            }
+          });
+          setLiveLoginMap(map);
+        }
+      } catch {
+        // Offline fallback
+      }
+    };
+
+    fetchLiveLogins();
+    const timer = setInterval(() => {
+      setNowMs(Date.now());
+      fetchLiveLogins();
+    }, 30000);
+
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, []);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState('All');
@@ -117,7 +188,7 @@ export const UserManagement: React.FC = () => {
           id: empId,
           employeeNo: formUserId.trim() || `CTSO-${Math.floor(1000 + Math.random() * 9000)}`,
           name: formName.trim(),
-          level: formRole === 'Admin' ? 'Lead Operations' : formRole === 'SPV' ? 'Supervisor Operasional' : 'NOC Engineer',
+          level: formRole === 'Admin' ? 'Head' : formRole === 'SPV' ? 'SPV' : 'Junior',
           email: cleanEmail,
           phone: '-',
           teamId: 'team_core',
@@ -390,12 +461,32 @@ export const UserManagement: React.FC = () => {
                       {acc.role}
                     </span>
                   </td>
-                  <td className="py-3 px-4 font-mono text-[11px] text-slate-500 dark:text-gray-400">
-                    {acc.lastLogin}
+                  <td className="py-3 px-4 font-mono text-[11px] text-slate-600 dark:text-gray-300">
+                    {(() => {
+                      const effectiveLastLogin =
+                        liveLoginMap[acc.email.toLowerCase()] || acc.lastLogin;
+                      const info = formatRealTimeLastLogin(effectiveLastLogin, nowMs);
+                      return (
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800 dark:text-gray-200">{info.primary}</span>
+                          {info.relative && (
+                            <span className="text-[10px] text-slate-400 dark:text-gray-400 font-sans">
+                              {info.relative}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </td>
                   <td className="py-3 px-4 text-center">
-                    <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40">
-                      {acc.status}
+                    <span
+                      className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-bold ${
+                        acc.status === 'active'
+                          ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40'
+                          : 'bg-slate-100 dark:bg-white/10 text-slate-500 dark:text-gray-400 border border-slate-200 dark:border-white/10'
+                      }`}
+                    >
+                      {acc.status === 'active' ? 'Active' : 'Inactive'}
                     </span>
                   </td>
                   {isAdmin && (
@@ -605,8 +696,8 @@ export const UserManagement: React.FC = () => {
                 onChange={(e) => setFormStatus(e.target.value as any)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-[#18181A] text-slate-900 dark:text-white focus:outline-none focus:border-[#F9C900]"
               >
-                <option value="active">Active (Aktif)</option>
-                <option value="inactive">Inactive (Nonaktif)</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
           </div>
@@ -700,8 +791,8 @@ export const UserManagement: React.FC = () => {
                 onChange={(e) => setEditStatus(e.target.value as any)}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-[#18181A] text-slate-900 dark:text-white focus:outline-none focus:border-[#F9C900]"
               >
-                <option value="active">Active (Aktif)</option>
-                <option value="inactive">Inactive (Nonaktif)</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
               </select>
             </div>
           </div>

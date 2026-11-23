@@ -362,7 +362,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 avatarText: (su.name || 'U').substring(0, 2).toUpperCase(),
                 phone: existing?.phone || '-',
                 createdAt: su.createdAt || existing?.createdAt || new Date().toISOString(),
-                lastLogin: existing?.lastLogin || 'Belum pernah login',
+                lastLogin: su.lastLogin || existing?.lastLogin || '',
                 password: existing?.password || 'admin'
               });
             });
@@ -372,8 +372,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         // Case 1: Server already has central records -> sync directly into state!
         if (serverEmps.length > 0) {
-          setEmployees(serverEmps);
-          saveState('employees', serverEmps);
+          const localEmpMap = new Map(localEmps.map((le) => [le.id, le]));
+          const mergedEmps = serverEmps.map((se: any) => {
+            const localMatch = localEmpMap.get(se.id) || localEmps.find((le) => le.employeeNo === se.employeeNo);
+            return {
+              ...localMatch,
+              ...se,
+              level: se.level || localMatch?.level || 'Junior'
+            };
+          });
+          setEmployees(mergedEmps);
+          saveState('employees', mergedEmps);
           if (serverSchedules.length > 0) {
             setSchedules(serverSchedules);
             saveState('schedules', serverSchedules);
@@ -707,7 +716,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: newEmpId,
         employeeNo: generatedEmpNo,
         name: name.trim(),
-        level: role === 'Admin' ? 'Lead Operations' : role === 'SPV' ? 'Supervisor Operasional' : 'NOC Engineer',
+        level: role === 'Admin' ? 'Head' : role === 'SPV' ? 'SPV' : 'Junior',
         email: cleanEmail,
         phone: '-',
         teamId: 'team_core',
@@ -846,11 +855,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
           if (res.success && res.data?.access_token) {
             const backendUser = res.data.user;
+            const loginTimeIso = backendUser.lastLogin || new Date().toISOString();
             const existingLocal = users.find(
               (u) => u.email.toLowerCase() === cleanInput || u.userId.toLowerCase() === cleanInput
             );
             const userToSet: User = existingLocal
-              ? { ...existingLocal, role: backendUser.role || existingLocal.role }
+              ? { ...existingLocal, role: backendUser.role || existingLocal.role, lastLogin: loginTimeIso }
               : {
                   id: backendUser.id || 'usr_' + Date.now(),
                   userId: backendUser.employeeId || 'CTSO-ADMIN',
@@ -865,9 +875,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                   avatarText: (backendUser.name || 'U').substring(0, 2).toUpperCase(),
                   phone: '-',
                   createdAt: new Date().toISOString(),
-                  lastLogin: 'Active Now'
+                  lastLogin: loginTimeIso
                 };
 
+            setUsers((prev) =>
+              prev.map((u) =>
+                u.email.toLowerCase() === userToSet.email.toLowerCase() || u.id === userToSet.id
+                  ? { ...u, lastLogin: loginTimeIso }
+                  : u
+              )
+            );
             startSession(userToSet, res.data.access_token);
             addActivityLog('LOGIN', 'auth', `Pengguna ${userToSet.name} (${userToSet.email}) login berhasil sebagai ${userToSet.role}`);
             return { success: true };
@@ -903,7 +920,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (matchedUser.status && matchedUser.status !== 'active') {
         return {
           success: false,
-          error: 'Akun berstatus nonaktif. Silakan hubungi Administrator.'
+          error: 'Akun berstatus Inactive. Silakan hubungi Administrator.'
         };
       }
 
@@ -915,8 +932,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      startSession(matchedUser);
-      addActivityLog('LOGIN', 'auth', `Pengguna ${matchedUser.name} (${matchedUser.email}) login berhasil (Offline Mode)`);
+      const offlineLoginIso = new Date().toISOString();
+      const updatedOfflineUser = { ...matchedUser, lastLogin: offlineLoginIso };
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.email.toLowerCase() === updatedOfflineUser.email.toLowerCase() || u.id === updatedOfflineUser.id
+            ? { ...u, lastLogin: offlineLoginIso }
+            : u
+        )
+      );
+      startSession(updatedOfflineUser);
+      addActivityLog('LOGIN', 'auth', `Pengguna ${updatedOfflineUser.name} (${updatedOfflineUser.email}) login berhasil (Offline Mode)`);
       return { success: true };
     },
     [users, addActivityLog]
@@ -2096,6 +2122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             employee_no: employee.employeeNo,
             name: employee.name,
             role: employee.role,
+            level: employee.level || 'Junior',
             status: employee.status || 'active',
             default_location: employee.defaultLocation || 'Badung',
             email: employee.email || null,
@@ -2119,6 +2146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             employee_no: employee.employeeNo,
             name: employee.name,
             role: employee.role,
+            level: employee.level,
             status: employee.status,
             default_location: employee.defaultLocation,
             email: employee.email,
