@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, ArrowRight, UserPlus, LogIn, User as UserIcon, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
 import cmsLogo from '../assets/cms-logo.jpeg';
+import cloudBg from '../assets/cloud-bg.jpg';
 
 export const Login: React.FC = () => {
   const { login, register, isAuthenticated } = useAuth();
@@ -113,7 +114,7 @@ export const Login: React.FC = () => {
   return (
     <div
       className="min-h-screen bg-cover bg-center bg-no-repeat relative flex flex-col justify-center items-center p-4 selection:bg-[#F9C900]/30 selection:text-[#111111] font-sans antialiased"
-      style={{ backgroundImage: `url('/cloud-bg.jpg')` }}
+      style={{ backgroundImage: `url(${cloudBg})` }}
     >
       {/* Soft backdrop overlay */}
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />
