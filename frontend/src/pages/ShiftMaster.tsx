@@ -1,25 +1,27 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { useTheme } from '../context/ThemeContext';
 import { Modal } from '../components/common/Modal';
 import { ShiftMasterItem } from '../types';
-import { toCssSlug, getContrastTextColor } from '../utils/codeStyles';
 import {
-  Clock,
+  RECOMMENDED_SHIFT_COLORS,
+  blendSolidColor,
+  getShiftBadgeStyle
+} from '../utils/codeStyles';
+import {
   Plus,
   Edit2,
   Trash2,
-  CheckCircle2,
-  PowerOff,
   AlertTriangle,
-  Layers,
-  ArrowRight
+  Check
 } from 'lucide-react';
 import { ModernTimePicker } from '../components/common/ModernTimePicker';
 
 export const ShiftMaster: React.FC = () => {
   const { shifts, addShift, updateShift, deleteShift, currentUser } = useAuth();
   const { showToast } = useToast();
+  const { theme } = useTheme();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -30,18 +32,18 @@ export const ShiftMaster: React.FC = () => {
   const [formStartTime, setFormStartTime] = useState('07:00');
   const [formEndTime, setFormEndTime] = useState('15:00');
   const [formEndDayOffset, setFormEndDayOffset] = useState<number>(0);
-  const [formColor, setFormColor] = useState('#0284C7');
-  const [formTextColor, setFormTextColor] = useState('#FFFFFF');
+  const [formColor, setFormColor] = useState<string>(RECOMMENDED_SHIFT_COLORS[0].hex);
   const [formIsOff, setFormIsOff] = useState(false);
   const [formOrder, setFormOrder] = useState<number>(1);
   const [formNote, setFormNote] = useState('');
   const [formStatus, setFormStatus] = useState<'active' | 'inactive'>('active');
 
   const isAdmin = currentUser?.role === 'Admin';
+  const isDark = theme === 'dark';
 
   const handleOpenAdd = () => {
     if (!isAdmin) {
-      showToast('Akses ditolak: Hanya Admin yang dapat mengelola master shift.', 'error');
+      showToast('Akses ditolak: Hanya Admin yang dapat mengelola Schedule Master.', 'error');
       return;
     }
     setEditingId(null);
@@ -50,8 +52,7 @@ export const ShiftMaster: React.FC = () => {
     setFormStartTime('07:00');
     setFormEndTime('15:00');
     setFormEndDayOffset(0);
-    setFormColor('#0284C7');
-    setFormTextColor('#FFFFFF');
+    setFormColor(RECOMMENDED_SHIFT_COLORS[0].hex);
     setFormIsOff(false);
     setFormOrder(shifts.length + 1);
     setFormNote('');
@@ -61,7 +62,7 @@ export const ShiftMaster: React.FC = () => {
 
   const handleOpenEdit = (sh: ShiftMasterItem) => {
     if (!isAdmin) {
-      showToast('Akses ditolak: Hanya Admin yang dapat mengedit master shift.', 'error');
+      showToast('Akses ditolak: Hanya Admin yang dapat mengedit Schedule Master.', 'error');
       return;
     }
     setEditingId(sh.id);
@@ -70,8 +71,7 @@ export const ShiftMaster: React.FC = () => {
     setFormStartTime(sh.startTime);
     setFormEndTime(sh.endTime);
     setFormEndDayOffset(sh.endDayOffset || 0);
-    setFormColor(sh.color);
-    setFormTextColor(sh.textColor || getContrastTextColor(sh.color || '#0284C7'));
+    setFormColor(sh.color || RECOMMENDED_SHIFT_COLORS[0].hex);
     setFormIsOff(sh.isOff);
     setFormOrder(sh.order);
     setFormNote(sh.note);
@@ -89,13 +89,13 @@ export const ShiftMaster: React.FC = () => {
         endTime: formEndTime,
         endDayOffset: formEndDayOffset,
         color: formColor,
-        textColor: formTextColor,
+        textColor: undefined,
         isOff: formIsOff,
         order: formOrder,
         note: formNote,
         status: formStatus
       });
-      showToast('Konfigurasi kode shift berhasil diperbarui.', 'success');
+      showToast('Konfigurasi kode jadwal berhasil diperbarui dan disinkronkan ke Schedule.', 'success');
     } else {
       addShift({
         code: formCode,
@@ -104,48 +104,48 @@ export const ShiftMaster: React.FC = () => {
         endTime: formEndTime,
         endDayOffset: formEndDayOffset,
         color: formColor,
-        textColor: formTextColor,
+        textColor: undefined,
         isOff: formIsOff,
         order: formOrder,
         note: formNote,
         status: formStatus
       });
-      showToast('Kode shift baru berhasil ditambahkan ke katalog.', 'success');
+      showToast('Kode jadwal baru berhasil ditambahkan ke katalog.', 'success');
     }
     setIsModalOpen(false);
-  };
-
-  const handleToggleStatus = (sh: ShiftMasterItem) => {
-    if (!isAdmin) return;
-    const newStatus = sh.status === 'active' ? 'inactive' : 'active';
-    updateShift(sh.id, { status: newStatus });
-    showToast(`Status shift ${sh.code} diubah menjadi ${newStatus}.`, 'info');
   };
 
   const handleConfirmDelete = () => {
     if (!deleteTarget) return;
     const res = deleteShift(deleteTarget.id);
     if (!res.success) {
-      showToast(res.error || 'Gagal menghapus kode shift.', 'error');
+      showToast(res.error || 'Gagal menghapus kode jadwal.', 'error');
     } else {
-      showToast(`Kode shift ${deleteTarget.code} berhasil dihapus dari master katalog.`, 'success');
+      showToast(`Kode ${deleteTarget.code} berhasil dihapus dari Schedule Master.`, 'success');
       setDeleteTarget(null);
     }
   };
 
+  const previewBg = isDark
+    ? blendSolidColor(formColor, 0.42, '#202020')
+    : blendSolidColor(formColor, 0.22, '#FFFFFF');
+  const previewBorder = isDark
+    ? blendSolidColor(formColor, 0.65, '#202020')
+    : blendSolidColor(formColor, 0.55, '#FFFFFF');
+  const previewText = isDark ? '#FFFFFF' : '#202020';
+
   return (
     <div className="space-y-6">
-      
       {/* Header */}
       <div className="bg-white dark:bg-[#18181A] p-4 sm:p-5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-black text-[#111111] dark:text-[#F2F4F7] tracking-tight">
-              Shift Master
+              Schedule Master
             </h1>
           </div>
           <p className="text-xs text-[#647084] dark:text-gray-400 mt-1">
-            Configure start times, end times, day offsets (+1 for overnight shift), and active status.
+            Configure schedule codes, working hours, day offsets (+1 for overnight shift), color themes, and active status.
           </p>
         </div>
 
@@ -153,10 +153,10 @@ export const ShiftMaster: React.FC = () => {
           <button
             type="button"
             onClick={handleOpenAdd}
-            className="px-4 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] text-[#111111] border border-[#E5B800] text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
+            className="px-4 py-2 rounded-xl bg-[#FFD416] hover:bg-[#FFE160] text-[#202020] border border-[#FFD416] text-xs font-bold flex items-center gap-1.5 transition-colors shadow-sm"
           >
             <Plus className="w-4 h-4" />
-            <span>Add Shift Code</span>
+            <span>Add Schedule Code</span>
           </button>
         )}
       </div>
@@ -172,11 +172,9 @@ export const ShiftMaster: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span
-                    style={{
-                      backgroundColor: sh.color || '#0284C7',
-                      color: sh.textColor || getContrastTextColor(sh.color || '#0284C7')
-                    }}
-                    className="text-xs font-black font-mono px-2.5 py-0.5 rounded-lg shadow-2xs inline-block"
+                    className={`text-xs font-black font-mono px-2.5 py-0.5 rounded-lg shadow-2xs inline-block ${
+                      getShiftBadgeStyle(sh.code, shifts).badge
+                    }`}
                   >
                     {sh.code}
                   </span>
@@ -219,7 +217,7 @@ export const ShiftMaster: React.FC = () => {
                   type="button"
                   onClick={() => setDeleteTarget(sh)}
                   className="p-1 rounded-lg border border-slate-300 dark:border-white/20 text-slate-600 dark:text-gray-300 hover:bg-slate-50 dark:hover:bg-white/10 transition-colors shadow-2xs"
-                  title={`Hapus kode shift ${sh.code}`}
+                  title={`Hapus kode ${sh.code}`}
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                 </button>
@@ -233,7 +231,7 @@ export const ShiftMaster: React.FC = () => {
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        title={editingId ? 'Edit Konfigurasi Shift' : 'Tambah Kode Shift Baru'}
+        title={editingId ? 'Edit Konfigurasi Schedule' : 'Tambah Kode Schedule Baru'}
         size="md"
       >
         <form onSubmit={handleSave} className="space-y-4">
@@ -250,7 +248,7 @@ export const ShiftMaster: React.FC = () => {
               />
             </div>
             <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Shift</label>
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Nama Schedule</label>
               <input
                 type="text"
                 value={formName}
@@ -289,49 +287,58 @@ export const ShiftMaster: React.FC = () => {
             </select>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Warna Background Kode</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={formColor}
-                  onChange={(e) => setFormColor(e.target.value)}
-                  className="w-10 h-9 p-0.5 rounded-lg border border-slate-200 dark:border-white/10 cursor-pointer bg-transparent"
-                />
-                <input
-                  type="text"
-                  value={formColor}
-                  onChange={(e) => setFormColor(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-mono text-slate-900 dark:text-white"
-                />
-              </div>
+          {/* Curated Recommended Color Palette (Synced to Schedule, Text Auto-Adapts to Light/Dark Mode) */}
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                Rekomendasi Warna Kode
+              </label>
+              <span className="text-[10px] text-slate-400 dark:text-gray-400">
+                Teks otomatis menyesuaikan Light / Dark Mode
+              </span>
             </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Warna Teks Kode</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={formTextColor}
-                  onChange={(e) => setFormTextColor(e.target.value)}
-                  className="w-10 h-9 p-0.5 rounded-lg border border-slate-200 dark:border-white/10 cursor-pointer bg-transparent"
-                />
-                <input
-                  type="text"
-                  value={formTextColor}
-                  onChange={(e) => setFormTextColor(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-mono text-slate-900 dark:text-white"
-                />
-              </div>
+            <div className="grid grid-cols-6 sm:grid-cols-9 gap-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10">
+              {RECOMMENDED_SHIFT_COLORS.map((swatch) => {
+                const isSelected = formColor.toLowerCase() === swatch.hex.toLowerCase();
+                return (
+                  <button
+                    key={swatch.hex}
+                    type="button"
+                    onClick={() => setFormColor(swatch.hex)}
+                    title={swatch.name}
+                    aria-label={`Pilih warna ${swatch.name}`}
+                    style={{ backgroundColor: swatch.hex }}
+                    className={`w-full aspect-square rounded-lg flex items-center justify-center transition-all cursor-pointer ${
+                      isSelected
+                        ? 'ring-2 ring-offset-2 ring-[#202020] dark:ring-[#FFD416] dark:ring-offset-[#202020] scale-105 shadow-sm'
+                        : 'hover:scale-105 opacity-90 hover:opacity-100'
+                    }`}
+                  >
+                    {isSelected && (
+                      <Check
+                        className={`w-3.5 h-3.5 stroke-[3] ${
+                          swatch.hex.toUpperCase() === '#FFD416' ? 'text-[#202020]' : 'text-white'
+                        }`}
+                      />
+                    )}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
           {/* Live Badge Preview */}
           <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 flex items-center justify-between">
-            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">Preview Tampilan Kode:</span>
+            <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+              Preview di Schedule:
+            </span>
             <span
-              style={{ backgroundColor: formColor, color: formTextColor }}
-              className="text-xs font-black font-mono px-3 py-1 rounded-lg shadow-2xs inline-block"
+              style={{
+                backgroundColor: previewBg,
+                borderColor: previewBorder,
+                color: previewText
+              }}
+              className="text-xs font-black font-mono px-3 py-1 rounded-lg border shadow-2xs inline-block"
             >
               {formCode || 'KODE'}
             </span>
@@ -380,9 +387,9 @@ export const ShiftMaster: React.FC = () => {
             </button>
             <button
               type="submit"
-              className="px-5 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] text-[#111111] border border-[#E5B800] text-xs font-bold shadow-sm"
+              className="px-5 py-2 rounded-xl bg-[#FFD416] hover:bg-[#FFE160] text-[#202020] border border-[#FFD416] text-xs font-bold shadow-sm"
             >
-              Simpan Master Shift
+              Simpan Schedule Master
             </button>
           </div>
         </form>
@@ -392,16 +399,16 @@ export const ShiftMaster: React.FC = () => {
       <Modal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Konfirmasi Hapus Kode Shift"
+        title="Konfirmasi Hapus Kode Schedule"
         size="sm"
       >
         <div className="space-y-4">
           <div className="p-3 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/40 rounded-xl text-xs text-rose-900 dark:text-rose-200 flex items-start gap-2.5">
             <AlertTriangle className="w-4 h-4 text-rose-600 dark:text-rose-400 flex-shrink-0 mt-0.5" />
             <div>
-              Apakah Anda yakin ingin menghapus kode shift <strong className="font-mono text-slate-900 dark:text-white">{deleteTarget?.code}</strong> ({deleteTarget?.name})?
+              Apakah Anda yakin ingin menghapus kode <strong className="font-mono text-slate-900 dark:text-white">{deleteTarget?.code}</strong> ({deleteTarget?.name})?
               <div className="text-[11px] text-rose-700 dark:text-rose-300 mt-1">
-                Tindakan ini tidak dapat dibatalkan. Shift yang masih digunakan dalam jadwal aktif tidak dapat dihapus.
+                Tindakan ini tidak dapat dibatalkan. Kode yang masih digunakan dalam jadwal aktif tidak dapat dihapus.
               </div>
             </div>
           </div>
@@ -420,12 +427,11 @@ export const ShiftMaster: React.FC = () => {
               className="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
-              <span>Hapus Shift</span>
+              <span>Hapus Kode</span>
             </button>
           </div>
         </div>
       </Modal>
-
     </div>
   );
 };

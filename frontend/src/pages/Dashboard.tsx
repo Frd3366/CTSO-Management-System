@@ -495,20 +495,29 @@ export const Dashboard: React.FC = () => {
 
             {/* Dynamic Grid: Auto fits number of jobdesk columns */}
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${kanbanColumns.length >= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4`}>
-              {kanbanColumns.map((col) => (
-                <div
-                  key={col.code}
-                  className="bg-white dark:bg-[#18181A] rounded-xl border border-slate-200/80 dark:border-white/10 overflow-hidden flex flex-col shadow-xs"
-                >
-                  {/* Column Header: Jobdesk Code */}
-                  <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-white dark:bg-[#18181A] flex items-center justify-between gap-2">
-                    <h3 className="text-xs font-black font-mono text-[#0F172A] dark:text-white truncate">
-                      {col.code}
-                    </h3>
-                    <span className="shrink-0 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300">
-                      {col.items.length} Staff
-                    </span>
-                  </div>
+              {kanbanColumns.map((col) => {
+                const jdStyle = getJobdeskBadgeStyle(col.code, jobdesks);
+                return (
+                  <div
+                    key={col.code}
+                    style={{ borderColor: jdStyle.border }}
+                    className="bg-white dark:bg-[#18181A] rounded-xl border-2 overflow-hidden flex flex-col shadow-xs"
+                  >
+                    {/* Column Header: Jobdesk Code */}
+                    <div
+                      style={{ borderBottomColor: `${jdStyle.border}40` }}
+                      className="px-4 py-3 border-b bg-white dark:bg-[#18181A] flex items-center justify-between gap-2"
+                    >
+                      <h3
+                        style={{ borderColor: jdStyle.border }}
+                        className="text-xs font-black font-mono text-[#0F172A] dark:text-white px-2.5 py-0.5 rounded-lg border-2 truncate"
+                      >
+                        {col.code}
+                      </h3>
+                      <span className="shrink-0 text-[10px] font-mono font-semibold px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/10 text-slate-600 dark:text-gray-300">
+                        {col.items.length} Staff
+                      </span>
+                    </div>
 
                   {/* Column Items */}
                   <div className="p-3.5 space-y-2.5 flex-1 min-h-[160px] bg-slate-50/50 dark:bg-white/[0.02]">
@@ -557,10 +566,11 @@ export const Dashboard: React.FC = () => {
                         );
                       })
                     )}
-                  </div>
-                </div>
-              ))}
-            </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
           </div>
 
           {/* Section: Personnel Roster Directory */}

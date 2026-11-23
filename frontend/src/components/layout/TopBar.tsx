@@ -121,7 +121,7 @@ export const TopBar: React.FC = () => {
   const allManagementItems = [
     { label: 'Employees', path: '/management/employees', icon: Users, desc: 'Master personnel data', roles: ['Admin', 'SPV'] },
     { label: 'User Accounts', path: '/management/users', icon: UserCog, desc: 'Account credentials & roles', roles: ['Admin'] },
-    { label: 'Shift Master', path: '/management/shift-master', icon: Clock, desc: 'Work schedule codes', roles: ['Admin', 'SPV'] },
+    { label: 'Schedule Master', path: '/management/shift-master', icon: Clock, desc: 'Work schedule codes', roles: ['Admin', 'SPV'] },
     { label: 'Jobdesk Master', path: '/management/jobdesk-master', icon: Layers, desc: 'CT1, CT2, CT4 catalog', roles: ['Admin', 'SPV'] },
     { label: 'Role & Permissions', path: '/management/permissions', icon: ShieldCheck, desc: 'SPV granular permission matrix', roles: ['Admin'] },
     { label: 'Announcements', path: '/management/announcements', icon: Megaphone, desc: 'Operational broadcasts', roles: ['Admin', 'SPV'] },

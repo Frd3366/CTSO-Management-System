@@ -55,7 +55,7 @@ export const GlobalSearchModal: React.FC<GlobalSearchModalProps> = ({ isOpen, on
     { name: 'Reports', path: '/reports', icon: FileText, desc: 'Operational data exports & attendance analytics', roles: ['Admin', 'SPV'] },
     { name: 'Employees Directory', path: '/management/employees', icon: Users, desc: 'Master personnel data and profiles', roles: ['Admin', 'SPV'] },
     { name: 'User Accounts', path: '/management/users', icon: UserCog, desc: 'Account credentials, logins & roles', roles: ['Admin'] },
-    { name: 'Shift Master', path: '/management/shift-master', icon: Clock, desc: 'Work schedule codes & standard hours', roles: ['Admin', 'SPV'] },
+    { name: 'Schedule Master', path: '/management/shift-master', icon: Clock, desc: 'Work schedule codes & standard hours', roles: ['Admin', 'SPV'] },
     { name: 'Jobdesk Master', path: '/management/jobdesk-master', icon: Layers, desc: 'CT task code definitions & catalogs', roles: ['Admin', 'SPV'] },
     { name: 'Role & Permissions', path: '/management/permissions', icon: ShieldCheck, desc: 'SPV & Employee granular permission matrix', roles: ['Admin'] },
     { name: 'Announcements', path: '/management/announcements', icon: Megaphone, desc: 'Broadcast operational notices to staff', roles: ['Admin', 'SPV'] },

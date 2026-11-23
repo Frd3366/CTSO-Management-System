@@ -55,7 +55,7 @@ export const AppLayout: React.FC = () => {
     if (p === '/history') return 'Schedule History';
     if (p.includes('/employees')) return 'Employee Directory';
     if (p.includes('/users')) return 'User Accounts';
-    if (p.includes('/shift-master')) return 'Shift Master Catalog';
+    if (p.includes('/shift-master')) return 'Schedule Master';
     if (p.includes('/jobdesk-master')) return 'Jobdesk Master Catalog';
     if (p.includes('/permissions')) return 'Role & Permissions';
     if (p.includes('/announcements')) return 'Announcements';
