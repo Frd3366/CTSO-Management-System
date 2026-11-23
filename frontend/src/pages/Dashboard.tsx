@@ -158,16 +158,25 @@ export const Dashboard: React.FC = () => {
     const activeMasterJobdesks = jobdesks.filter((j) => j.status === 'active' || !j.status);
     const targetJobdesks = activeMasterJobdesks.length > 0 ? activeMasterJobdesks : jobdesks;
 
-    return targetJobdesks.map((jd) => {
-      const items = workingStaff.filter((s) => s.jobdeskCode === jd.code);
-      return {
-        code: jd.code,
-        name: jd.name || jd.code,
-        color: jd.color || '#0284C7',
-        textColor: jd.textColor,
-        items
-      };
-    });
+    return targetJobdesks
+      .map((jd) => {
+        const items = workingStaff
+          .filter((s) => s.jobdeskCode === jd.code)
+          .sort((a, b) =>
+            (a.employeeName || '').localeCompare(b.employeeName || '', undefined, {
+              numeric: true,
+              sensitivity: 'base'
+            })
+          );
+        return {
+          code: jd.code,
+          name: jd.name || jd.code,
+          color: jd.color || '#0284C7',
+          textColor: jd.textColor,
+          items
+        };
+      })
+      .sort((a, b) => a.code.localeCompare(b.code, undefined, { numeric: true, sensitivity: 'base' }));
   }, [dayAssignments, jobdesks, isOffShift]);
 
   // Shift Distribution Groups
@@ -212,7 +221,12 @@ export const Dashboard: React.FC = () => {
       }
     });
 
-    return Array.from(map.values());
+    return Array.from(map.values()).sort((a, b) =>
+      String(a.shift.code || '').localeCompare(String(b.shift.code || ''), undefined, {
+        numeric: true,
+        sensitivity: 'base'
+      })
+    );
   }, [shifts, dayAssignments, isOffShift]);
 
   // Filtered Roster Directory Table
@@ -496,21 +510,20 @@ export const Dashboard: React.FC = () => {
             {/* Dynamic Grid: Auto fits number of jobdesk columns */}
             <div className={`grid grid-cols-1 sm:grid-cols-2 ${kanbanColumns.length >= 3 ? 'lg:grid-cols-3' : 'lg:grid-cols-2'} gap-4`}>
               {kanbanColumns.map((col) => {
-                const jdStyle = getJobdeskBadgeStyle(col.code, jobdesks);
+                const badgeBorderColor = col.color || '#0284C7';
                 return (
                   <div
                     key={col.code}
-                    style={{ borderColor: jdStyle.border }}
-                    className="bg-white dark:bg-[#18181A] rounded-xl border-2 overflow-hidden flex flex-col shadow-xs"
+                    className="bg-white dark:bg-[#18181A] rounded-xl border border-slate-200/80 dark:border-white/10 overflow-hidden flex flex-col shadow-xs"
                   >
-                    {/* Column Header: Jobdesk Code */}
-                    <div
-                      style={{ borderBottomColor: `${jdStyle.border}40` }}
-                      className="px-4 py-3 border-b bg-white dark:bg-[#18181A] flex items-center justify-between gap-2"
-                    >
+                    {/* Column Header: Jobdesk Code with colored border */}
+                    <div className="px-4 py-3 border-b border-slate-100 dark:border-white/10 bg-white dark:bg-[#18181A] flex items-center justify-between gap-2">
                       <h3
-                        style={{ borderColor: jdStyle.border }}
-                        className="text-xs font-black font-mono text-[#0F172A] dark:text-white px-2.5 py-0.5 rounded-lg border-2 truncate"
+                        style={{
+                          borderColor: badgeBorderColor,
+                          backgroundColor: `${badgeBorderColor}14`
+                        }}
+                        className="text-xs font-black font-mono text-[#202020] dark:text-white px-2.5 py-0.5 rounded-lg border-2 truncate"
                       >
                         {col.code}
                       </h3>

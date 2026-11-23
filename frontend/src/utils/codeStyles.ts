@@ -316,10 +316,10 @@ export const getJobdeskBadgeStyle = (code?: string, jobdesksList?: JobdeskItem[]
     card: `card-jobdesk-${slug} border-0 font-bold`,
     badge: `badge-jobdesk-${slug} border font-bold`,
     cell: `cell-jobdesk-${slug} border-0 font-bold`,
-    border: 'transparent',
+    border: activeColor,
     style: {
       backgroundColor: darkPastelBg,
-      borderColor: 'transparent',
+      borderColor: activeColor,
       color: activeText
     }
   };
