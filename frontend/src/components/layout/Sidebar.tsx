@@ -26,8 +26,8 @@ import {
   FileText,
   Sun,
   Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
+  ChevronsLeft,
+  ChevronsRight,
   BarChart3
 } from 'lucide-react';
 
@@ -340,7 +340,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               className="hidden lg:flex p-2.5 rounded-xl text-slate-600 dark:text-gray-300 hover:text-[#111111] dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 transition-colors"
               title={isCollapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
-              {isCollapsed ? <PanelLeftOpen className="w-4 h-4" aria-hidden="true" /> : <PanelLeftClose className="w-4 h-4" aria-hidden="true" />}
+              {isCollapsed ? <ChevronsRight className="w-4 h-4" aria-hidden="true" /> : <ChevronsLeft className="w-4 h-4" aria-hidden="true" />}
             </button>
           </div>
 

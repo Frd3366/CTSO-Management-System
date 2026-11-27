@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Calendar, Clock } from 'lucide-react';
+import { ArrowRight, Calendar, Clock, Sun, Moon } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { PixelOfficeStage, OfficeAvatarData, OfficeTVStats } from '../components/office3d/PixelOfficeStage';
 import { EMPLOYEE_PROFILES, STUDIO_PROFILES } from '../components/office3d/employee.js';
 import { ShiftMasterItem } from '../types';
@@ -74,6 +75,7 @@ function isAssignmentActiveNow(
 
 export const Landing: React.FC = () => {
   const { isAuthenticated, schedules, employees, shifts, jobdesks } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [nowMs, setNowMs] = useState(() => Date.now());
 
   // Tick real-time WITA clock every second
@@ -274,13 +276,29 @@ export const Landing: React.FC = () => {
             </div>
           </div>
 
-          {/* Live Hari, Tanggal & Jam WITA */}
-          <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#F4F4F4] dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-[13px] font-semibold text-[#202020] dark:text-neutral-200">
-            <Calendar className="w-4 h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
-            <span className="hidden sm:inline">{wita.dateLabel}</span>
-            <span className="hidden sm:inline text-slate-300 dark:text-neutral-600">•</span>
-            <Clock className="w-4 h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
-            <span className="font-mono font-bold tabular-nums">{wita.timeLabel}</span>
+          {/* Live Hari, Tanggal & Jam WITA + Global Dark/Light Mode Toggle */}
+          <div className="flex items-center gap-2.5">
+            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#F4F4F4] dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-[13px] font-semibold text-[#202020] dark:text-neutral-200">
+              <Calendar className="w-4 h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
+              <span className="hidden sm:inline">{wita.dateLabel}</span>
+              <span className="hidden sm:inline text-slate-300 dark:text-neutral-600">•</span>
+              <Clock className="w-4 h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
+              <span className="font-mono font-bold tabular-nums">{wita.timeLabel}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'}
+              title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              className="p-2.5 rounded-xl bg-[#F4F4F4] dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-200 hover:text-[#111111] dark:hover:text-white hover:border-[#FFD416] transition-colors cursor-pointer"
+            >
+              {theme === 'dark' ? (
+                <Sun className="w-4 h-4 text-[#FFD416]" aria-hidden="true" />
+              ) : (
+                <Moon className="w-4 h-4" aria-hidden="true" />
+              )}
+            </button>
           </div>
         </div>
       </header>
