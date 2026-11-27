@@ -280,43 +280,6 @@ export const JobdeskMaster: React.FC = () => {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Warna Background Kode</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={formColor}
-                  onChange={(e) => setFormColor(e.target.value)}
-                  className="w-10 h-9 p-0.5 rounded-lg border border-slate-200 dark:border-white/10 cursor-pointer bg-transparent"
-                />
-                <input
-                  type="text"
-                  value={formColor}
-                  onChange={(e) => setFormColor(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-mono text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Warna Teks Kode</label>
-              <div className="flex items-center gap-2">
-                <input
-                  type="color"
-                  value={formTextColor}
-                  onChange={(e) => setFormTextColor(e.target.value)}
-                  className="w-10 h-9 p-0.5 rounded-lg border border-slate-200 dark:border-white/10 cursor-pointer bg-transparent"
-                />
-                <input
-                  type="text"
-                  value={formTextColor}
-                  onChange={(e) => setFormTextColor(e.target.value)}
-                  className="flex-1 px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs font-mono text-slate-900 dark:text-white"
-                />
-              </div>
-            </div>
-          </div>
-
           <div className="grid grid-cols-2 gap-3 items-center">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Status</label>

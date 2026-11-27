@@ -19,6 +19,7 @@ import {
   Plus,
   Trash2,
   Eye,
+  Edit2,
   FileText,
   StickyNote,
   X
@@ -29,12 +30,16 @@ import { getStoredHolidays, saveStoredHolidays, HolidayRecord } from '../utils/h
 import { parseLocalDate, formatLocalDateIso, getTodayIso } from '../utils/dateUtils';
 
 export const JobdeskView: React.FC = () => {
-  const { schedules, jobdesks, shifts, employees, currentUser, addSchedule, updateSchedule, deleteSchedule } =
+  const { schedules, jobdesks, shifts, employees, currentUser, addSchedule, updateSchedule, deleteSchedule, updateJobdesk } =
     useAuth();
   const { showToast } = useToast();
 
   const [viewMode, setViewMode] = useState<'daily' | 'weekly' | 'monthly'>('daily');
-  const [selectedJobdeskDetail, setSelectedJobdeskDetail] = useState<any | null>(null);
+  const [selectedJobdeskCode, setSelectedJobdeskCode] = useState<string | null>(null);
+  const [isEditingJobdeskMaster, setIsEditingJobdeskMaster] = useState(false);
+  const [editJdName, setEditJdName] = useState('');
+  const [editJdDescription, setEditJdDescription] = useState('');
+  const [editJdStatus, setEditJdStatus] = useState<'active' | 'inactive'>('active');
 
 
   const formatDateDMY = (isoDate: string) => {
@@ -242,17 +247,49 @@ export const JobdeskView: React.FC = () => {
       });
 
       return {
+        id: master.id,
         code,
         name: master.name || code,
         description: master.description || '',
         color: master.color || '#0284C7',
         textColor: master.textColor,
+        status: master.status || 'active',
         totalRoster: activeAssignments.length,
         shiftBreakdown,
         items: activeAssignments
       };
     });
   }, [jobdesks, visibleSchedules, viewMode, currentDateStr, weeklyDays, monthlyDays]);
+
+  const selectedJobdeskDetail = useMemo(() => {
+    if (!selectedJobdeskCode) return null;
+    return jobdeskCards.find((c) => c.code === selectedJobdeskCode) || null;
+  }, [jobdeskCards, selectedJobdeskCode]);
+
+  const handleOpenJobdeskDetail = (code: string) => {
+    setSelectedJobdeskCode(code);
+    setIsEditingJobdeskMaster(false);
+  };
+
+  const handleStartEditJobdeskMaster = () => {
+    if (!selectedJobdeskDetail) return;
+    setEditJdName(selectedJobdeskDetail.name);
+    setEditJdDescription(selectedJobdeskDetail.description);
+    setEditJdStatus(selectedJobdeskDetail.status === 'inactive' ? 'inactive' : 'active');
+    setIsEditingJobdeskMaster(true);
+  };
+
+  const handleSaveJobdeskMasterFromView = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedJobdeskDetail) return;
+    updateJobdesk(selectedJobdeskDetail.id, {
+      name: editJdName.trim() || selectedJobdeskDetail.name,
+      description: editJdDescription.trim(),
+      status: editJdStatus
+    });
+    showToast(`Master Jobdesk ${selectedJobdeskDetail.code} berhasil diperbarui.`, 'success');
+    setIsEditingJobdeskMaster(false);
+  };
 
   // Filtered employees
   const filteredEmployees = useMemo(() => {
@@ -558,45 +595,47 @@ export const JobdeskView: React.FC = () => {
         </div>
       </div>
 
-      {/* PRD 6.1: Dynamic Jobdesk Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
-        {jobdeskCards.map((card) => (
-          <div
-            key={card.code}
-            className="bg-white dark:bg-[#18181A] p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] transition-all hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md"
-          >
-            <div className="flex items-center justify-between">
-              <span
-                style={{
-                  backgroundColor: card.color,
-                  color: card.textColor || getContrastTextColor(card.color)
-                }}
-                className="text-xs font-black font-mono px-3.5 py-1.5 rounded-xl shadow-xs"
-              >
-                {card.code}
-              </span>
+      {/* PRD 6.1: Dynamic Jobdesk Cards (shown separately for Weekly/Monthly views) */}
+      {viewMode !== 'daily' && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
+          {jobdeskCards.map((card) => (
+            <div
+              key={card.code}
+              className="bg-white dark:bg-[#18181A] p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] transition-all hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md"
+            >
+              <div className="flex items-center justify-between">
+                <span
+                  style={{
+                    backgroundColor: card.color,
+                    color: card.textColor || getContrastTextColor(card.color)
+                  }}
+                  className="text-xs font-black font-mono px-3.5 py-1.5 rounded-xl shadow-xs"
+                >
+                  {card.code}
+                </span>
 
-              <button
-                type="button"
-                onClick={() => setSelectedJobdeskDetail(card)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500"
-                title={`Lihat keterangan tugas ${card.code}`}
-              >
-                <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
-                <span>View Jobdesk</span>
-              </button>
+                <button
+                  type="button"
+                  onClick={() => handleOpenJobdeskDetail(card.code)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500"
+                  title={`Lihat keterangan tugas ${card.code}`}
+                >
+                  <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                  <span>View Jobdesk</span>
+                </button>
+              </div>
+
+              <div className="mt-3.5">
+                <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                  {card.name}
+                </h3>
+              </div>
             </div>
+          ))}
+        </div>
+      )}
 
-            <div className="mt-3.5">
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
-                {card.name}
-              </h3>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {/* VIEW 1: DAILY KANBAN (PRD Section 6.2) - List Only (Header description already in top cards) */}
+      {/* VIEW 1: DAILY KANBAN (PRD Section 6.2) — Unified header + staff list per jobdesk column so mobile aligns properly */}
       {viewMode === 'daily' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
           {jobdeskCards.map((col) => {
@@ -605,12 +644,42 @@ export const JobdeskView: React.FC = () => {
             );
 
             return (
-              <div
-                key={col.code}
-                className="bg-white dark:bg-[#18181A] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col"
-              >
-                {/* Column Cards List */}
-                <div className="p-3.5 space-y-2.5 flex-1 min-h-[220px]">
+              <div key={col.code} className="flex flex-col gap-3">
+                {/* Jobdesk Heading Card */}
+                <div className="bg-white dark:bg-[#18181A] p-5 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] transition-all hover:border-slate-300 dark:hover:border-white/20 hover:shadow-md">
+                  <div className="flex items-center justify-between">
+                    <span
+                      style={{
+                        backgroundColor: col.color,
+                        color: col.textColor || getContrastTextColor(col.color)
+                      }}
+                      className="text-xs font-black font-mono px-3.5 py-1.5 rounded-xl shadow-xs"
+                    >
+                      {col.code}
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenJobdeskDetail(col.code)}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 dark:bg-white/10 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 border border-slate-200/80 dark:border-white/10 transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-2 focus:ring-sky-500"
+                      title={`Lihat keterangan tugas ${col.code}`}
+                    >
+                      <Eye className="w-3.5 h-3.5 text-slate-500 dark:text-slate-400" />
+                      <span>View Jobdesk</span>
+                    </button>
+                  </div>
+
+                  <div className="mt-3.5">
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                      {col.name}
+                    </h3>
+                  </div>
+                </div>
+
+                {/* Staff List Card directly paired under its Jobdesk Heading */}
+                <div className="bg-white dark:bg-[#18181A] rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.03)] overflow-hidden flex flex-col flex-1">
+                  {/* Column Cards List */}
+                  <div className="p-3.5 space-y-2.5 flex-1 min-h-[180px] md:min-h-[220px]">
                   {dailyItems.length === 0 ? (
                     <div className="h-full flex items-center justify-center text-center p-6 text-xs text-slate-400 dark:text-gray-500 italic">
                       Tidak ada personel bertugas di {col.code} pada tanggal ini.
@@ -676,6 +745,7 @@ export const JobdeskView: React.FC = () => {
                       <Plus className="w-3.5 h-3.5" /> Tambah Personel {col.code}
                     </button>
                   )}
+                  </div>
                 </div>
               </div>
             );
@@ -1568,95 +1638,209 @@ export const JobdeskView: React.FC = () => {
         </form>
       </Modal>
 
-      {/* MODAL: VIEW KETERANGAN JOBDESK */}
+      {/* MODAL: VIEW & INTEGRATED EDIT KETERANGAN JOBDESK (Synced with Jobdesk Master) */}
       <Modal
         isOpen={!!selectedJobdeskDetail}
-        onClose={() => setSelectedJobdeskDetail(null)}
-        title={`Keterangan Jobdesk - ${selectedJobdeskDetail?.code || ''}`}
+        onClose={() => {
+          setSelectedJobdeskCode(null);
+          setIsEditingJobdeskMaster(false);
+        }}
+        title={
+          isEditingJobdeskMaster
+            ? `Edit Jobdesk Master - ${selectedJobdeskDetail?.code || ''}`
+            : `Keterangan Jobdesk - ${selectedJobdeskDetail?.code || ''}`
+        }
         size="md"
       >
-        {selectedJobdeskDetail && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10">
-              <span
-                style={{
-                  backgroundColor: selectedJobdeskDetail.color,
-                  color: selectedJobdeskDetail.textColor || getContrastTextColor(selectedJobdeskDetail.color)
-                }}
-                className="text-sm font-black font-mono px-3.5 py-1.5 rounded-xl shadow-md ring-2 ring-black/10 dark:ring-white/20"
-              >
-                {selectedJobdeskDetail.code}
-              </span>
-              <div>
-                <h4 className="text-xs font-bold text-slate-900 dark:text-white">
-                  {selectedJobdeskDetail.name}
-                </h4>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
-                  Total Personel:{' '}
-                  <strong className="font-mono text-slate-800 dark:text-slate-200">
-                    {selectedJobdeskDetail.totalRoster} Personel
-                  </strong>
+        {selectedJobdeskDetail &&
+          (isEditingJobdeskMaster ? (
+            <form onSubmit={handleSaveJobdeskMasterFromView} className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Kode Jobdesk
+                  </label>
+                  <input
+                    type="text"
+                    value={selectedJobdeskDetail.code}
+                    disabled
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-white/5 text-xs font-mono font-bold text-slate-500 dark:text-slate-400 cursor-not-allowed"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    Nama Fungsi
+                  </label>
+                  <input
+                    type="text"
+                    value={editJdName}
+                    onChange={(e) => setEditJdName(e.target.value)}
+                    className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs text-slate-900 dark:text-white"
+                    required
+                  />
                 </div>
               </div>
-            </div>
 
-            <div>
-              <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
-                <span>Ruang Lingkup &amp; Butir Tugas</span>
-              </h5>
-              <div className="space-y-2">
-                {parseJobdeskTasks(selectedJobdeskDetail.description).length === 0 ? (
-                  <p className="text-xs text-slate-400 dark:text-gray-500 italic">
-                    Belum ada deskripsi tugas.
-                  </p>
-                ) : (
-                  parseJobdeskTasks(selectedJobdeskDetail.description).map((task: string, idx: number) => (
-                    <div
-                      key={idx}
-                      className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200"
-                    >
-                      <span
-                        className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
-                        style={{ backgroundColor: selectedJobdeskDetail.color || '#0284C7' }}
-                      />
-                      <span className="leading-relaxed font-medium">{task}</span>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700 dark:text-slate-300">
+                    Deskripsi Ruang Lingkup
+                  </label>
+                  <span className="text-[10px] text-slate-400">Pisahkan dengan koma, titik koma, atau baris baru</span>
+                </div>
+                <textarea
+                  rows={3}
+                  value={editJdDescription}
+                  onChange={(e) => setEditJdDescription(e.target.value)}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs text-slate-900 dark:text-white"
+                  required
+                />
+                {editJdDescription.trim() && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10">
+                    <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5">
+                      Pratinjau Butir Tugas:
                     </div>
-                  ))
+                    <div className="flex flex-wrap gap-1.5">
+                      {parseJobdeskTasks(editJdDescription).map((task, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-white dark:bg-white/10 border border-slate-200 dark:border-white/10 text-[11px] text-slate-700 dark:text-slate-300 font-medium shadow-2xs"
+                        >
+                          <span
+                            className="w-1.5 h-1.5 rounded-full shrink-0"
+                            style={{ backgroundColor: selectedJobdeskDetail.color || '#0284C7' }}
+                          />
+                          <span>{task}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
               </div>
-            </div>
 
-            {Object.entries(selectedJobdeskDetail.shiftBreakdown).length > 0 && (
-              <div className="pt-3 border-t border-slate-100 dark:border-white/10">
-                <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
-                  Distribusi Personel per Shift:
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {Object.entries(selectedJobdeskDetail.shiftBreakdown).map(([shiftName, count]) => (
-                    <span
-                      key={shiftName}
-                      className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-mono"
-                    >
-                      <span>{shiftName}:</span>
-                      <strong>{count as number}</strong>
-                    </span>
-                  ))}
+              <div>
+                <label className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">Status</label>
+                <select
+                  value={editJdStatus}
+                  onChange={(e) => setEditJdStatus(e.target.value as 'active' | 'inactive')}
+                  className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs bg-white dark:bg-[#18181A] text-slate-900 dark:text-white"
+                >
+                  <option value="active">Active</option>
+                  <option value="inactive">Inactive</option>
+                </select>
+              </div>
+
+              <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditingJobdeskMaster(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 dark:border-white/10 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5 transition-colors"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] text-[#111111] border border-[#E5B800] text-xs font-bold shadow-sm transition-colors"
+                >
+                  Simpan ke Jobdesk Master
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 p-3.5 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10">
+                <span
+                  style={{
+                    backgroundColor: selectedJobdeskDetail.color,
+                    color: selectedJobdeskDetail.textColor || getContrastTextColor(selectedJobdeskDetail.color)
+                  }}
+                  className="text-sm font-black font-mono px-3.5 py-1.5 rounded-xl shadow-md ring-2 ring-black/10 dark:ring-white/20"
+                >
+                  {selectedJobdeskDetail.code}
+                </span>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900 dark:text-white">
+                    {selectedJobdeskDetail.name}
+                  </h4>
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400 font-medium mt-0.5">
+                    Total Personel:{' '}
+                    <strong className="font-mono text-slate-800 dark:text-slate-200">
+                      {selectedJobdeskDetail.totalRoster} Personel
+                    </strong>
+                  </div>
                 </div>
               </div>
-            )}
 
-            <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex justify-end">
-              <button
-                type="button"
-                onClick={() => setSelectedJobdeskDetail(null)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors"
-              >
-                Tutup
-              </button>
+              <div>
+                <h5 className="text-xs font-bold text-slate-700 dark:text-slate-300 mb-2 flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5 text-sky-600 dark:text-sky-400" />
+                  <span>Ruang Lingkup &amp; Butir Tugas</span>
+                </h5>
+                <div className="space-y-2">
+                  {parseJobdeskTasks(selectedJobdeskDetail.description).length === 0 ? (
+                    <p className="text-xs text-slate-400 dark:text-gray-500 italic">
+                      Belum ada deskripsi tugas.
+                    </p>
+                  ) : (
+                    parseJobdeskTasks(selectedJobdeskDetail.description).map((task: string, idx: number) => (
+                      <div
+                        key={idx}
+                        className="flex items-start gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200/80 dark:border-white/10 text-xs text-slate-700 dark:text-slate-200"
+                      >
+                        <span
+                          className="w-1.5 h-1.5 rounded-full mt-1.5 shrink-0"
+                          style={{ backgroundColor: selectedJobdeskDetail.color || '#0284C7' }}
+                        />
+                        <span className="leading-relaxed font-medium">{task}</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+
+              {Object.entries(selectedJobdeskDetail.shiftBreakdown).length > 0 && (
+                <div className="pt-3 border-t border-slate-100 dark:border-white/10">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-2">
+                    Distribusi Personel per Shift:
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(selectedJobdeskDetail.shiftBreakdown).map(([shiftName, count]) => (
+                      <span
+                        key={shiftName}
+                        className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-white/10 border border-slate-200 dark:border-white/10 text-slate-700 dark:text-slate-300 flex items-center gap-1.5 font-mono"
+                      >
+                        <span>{shiftName}:</span>
+                        <strong>{count as number}</strong>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-3 border-t border-slate-100 dark:border-white/10 flex items-center justify-end gap-2">
+                {currentUser?.role === 'Admin' && (
+                  <button
+                    type="button"
+                    onClick={handleStartEditJobdeskMaster}
+                    className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] text-[#111111] border border-[#E5B800] text-xs font-bold shadow-xs transition-colors cursor-pointer"
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    <span>Edit Jobdesk Master</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedJobdeskCode(null);
+                    setIsEditingJobdeskMaster(false);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/15 text-xs font-semibold text-slate-700 dark:text-slate-300 transition-colors cursor-pointer"
+                >
+                  Tutup
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          ))}
       </Modal>
 
     </div>

@@ -89,6 +89,8 @@ interface PixelAgent {
   tieColor: string | null;
   workSub: 'typing' | 'mouse' | 'sip' | 'phone';
   workSubTimer: number;
+  chatPartnerIdx: number | null;
+  isChatHost: boolean;
 }
 
 const SKIN_TONES = ['#f5cba7', '#e8b48a', '#f8d5b8', '#e2a97e', '#f0bf96', '#f7d1b2'];
@@ -128,9 +130,9 @@ const MAIN_TOILET_POI: PixelPOI = {
 const STUDIO_TOILET_POI: PixelPOI = {
   id: 'toilet',
   label: 'Ke Toilet',
-  x: 160,
-  y: 248,
-  facing: 'down',
+  x: 334,
+  y: 162,
+  facing: 'right',
   icon: '🚻',
 };
 
@@ -277,6 +279,8 @@ function createAgents(room: 'main' | 'studio', desks: PixelDesk[]): PixelAgent[]
     tieColor: TIE_TONES[i % TIE_TONES.length],
     workSub: 'typing',
     workSubTimer: 3 + Math.random() * 4,
+    chatPartnerIdx: null,
+    isChatHost: false,
   }));
 }
 
@@ -754,16 +758,25 @@ function renderWoodStudioPixel(
   selectedJobdesk: string | null,
   time: number
 ) {
-  // Rich warm walnut wood-plank pixel floor (Stardew farmhouse interior vibe!)
+  // Rich warm walnut wood-plank pixel floor (filled edge-to-edge with zero empty gaps!)
   const plankColors = ['#8a5d3b', '#7f5333', '#936542', '#835737'];
-  for (let py = 54; py < STUDIO_H - 8; py += 12) {
+  const floorLeft = 16;
+  const floorRight = STUDIO_W - 18;
+  for (let py = 54; py < STUDIO_H - 14; py += 12) {
     const row = Math.floor(py / 12);
     const offset = (row % 2) * 24;
-    for (let pxX = 16; pxX < STUDIO_W - 16; pxX += 48) {
-      const col = plankColors[(row + Math.floor(pxX / 48)) % plankColors.length];
-      px(ctx, pxX - (offset % 48), py, 48, 12, col);
-      px(ctx, pxX - (offset % 48), py + 11, 48, 1, 'rgba(45, 24, 10, 0.35)');
-      px(ctx, pxX - (offset % 48), py, 1, 12, 'rgba(45, 24, 10, 0.28)');
+    const plankH = Math.min(12, STUDIO_H - 14 - py);
+    for (let pxX = floorLeft - offset; pxX < floorRight; pxX += 48) {
+      const drawX = Math.max(floorLeft, pxX);
+      const drawEnd = Math.min(floorRight, pxX + 48);
+      const drawW = drawEnd - drawX;
+      if (drawW <= 0) continue;
+      const colIdx = Math.abs(row + Math.floor((pxX - floorLeft + 48) / 48)) % plankColors.length;
+      px(ctx, drawX, py, drawW, plankH, plankColors[colIdx]);
+      px(ctx, drawX, py + plankH - 1, drawW, 1, 'rgba(45, 24, 10, 0.35)');
+      if (pxX >= floorLeft) {
+        px(ctx, drawX, py, 1, plankH, 'rgba(45, 24, 10, 0.28)');
+      }
     }
   }
 
@@ -800,16 +813,41 @@ function renderWoodStudioPixel(
   px(ctx, 186, 34, 12, 12, '#18181b');
   px(ctx, 188, 38, 8, 5, '#27272a');
 
-  // --- Left & Right Matching Black-Framed Frosted Sliding Glass Walls ---
-  for (const wallX of [4, STUDIO_W - 18]) {
-    px(ctx, wallX, 4, 14, STUDIO_H - 12, '#111318');
-    for (let gy = 10; gy < STUDIO_H - 18; gy += 34) {
-      px(ctx, wallX + 2, gy, 10, 30, '#e8eef5');
-      px(ctx, wallX + 4, gy + 3, 3, 22, 'rgba(255,255,255,0.65)');
-    }
+  // --- Left Wall: Black-Framed Frosted Sliding Glass Wall ---
+  px(ctx, 4, 4, 14, STUDIO_H - 18, '#111318');
+  for (let gy = 10; gy < STUDIO_H - 22; gy += 34) {
+    px(ctx, 6, gy, 10, 30, '#e8eef5');
+    px(ctx, 8, gy + 3, 3, 22, 'rgba(255,255,255,0.65)');
   }
-  // Bottom frame border
-  px(ctx, 4, STUDIO_H - 10, STUDIO_W - 8, 10, '#3b2415');
+
+  // --- Right Wall: Frosted Glass Wall + Entrance/Exit Doorway (y = 144..182) ---
+  const rightWallX = STUDIO_W - 18;
+  // Upper section above door
+  px(ctx, rightWallX, 4, 14, 140, '#111318');
+  for (let gy = 10; gy < 138; gy += 34) {
+    px(ctx, rightWallX + 2, gy, 10, 30, '#e8eef5');
+    px(ctx, rightWallX + 4, gy + 3, 3, 22, 'rgba(255,255,255,0.65)');
+  }
+  // Lower section below door
+  px(ctx, rightWallX, 182, 14, STUDIO_H - 196, '#111318');
+  px(ctx, rightWallX + 2, 186, 10, STUDIO_H - 204, '#e8eef5');
+  px(ctx, rightWallX + 4, 188, 3, Math.max(8, STUDIO_H - 210), 'rgba(255,255,255,0.65)');
+  // Right Doorway (open wooden threshold + frame jambs + doormat + door leaf)
+  px(ctx, rightWallX, 142, 14, 3, '#3b2415'); // top door jamb
+  px(ctx, rightWallX, 181, 14, 3, '#3b2415'); // bottom door jamb
+  px(ctx, rightWallX, 145, 14, 36, '#8a5d3b'); // wood floor threshold
+  px(ctx, rightWallX + 2, 149, 10, 28, '#54321c'); // dark walnut doormat border
+  px(ctx, rightWallX + 3, 151, 8, 24, '#7c4e2f'); // doormat inner
+  px(ctx, rightWallX + 11, 145, 3, 36, '#18181b'); // sliding door edge
+  px(ctx, rightWallX + 9, 160, 2, 6, '#FFD416'); // brass/gold door handle
+
+  // --- Bottom Wall: Matching Warm Walnut Wood Panel Wall ---
+  px(ctx, 4, STUDIO_H - 14, STUDIO_W - 8, 14, '#6d4428');
+  px(ctx, 4, STUDIO_H - 14, STUDIO_W - 8, 3, '#472a16'); // crisp baseboard top trim
+  px(ctx, 8, STUDIO_H - 10, STUDIO_W - 16, 8, '#7c4e2f'); // recessed walnut panel
+  for (let wx = 44; wx < STUDIO_W - 24; wx += 48) {
+    px(ctx, wx, STUDIO_H - 10, 2, 8, '#54321c'); // vertical wood panel seams
+  }
 
   // --- Center Shared Warm Solid-Wood Table (4 seats facing 2x2) ---
   px(ctx, 120, 98, 84, 92, 'rgba(25, 14, 5, 0.25)');
@@ -1027,11 +1065,55 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
           a.workSubTimer = 3 + Math.random() * 4;
         }
 
-        if (a.stateTimer >= a.workDuration) {
+        if (a.stateTimer >= a.workDuration && !a.isChatHost) {
           const awayCount = activeList.filter((x) => x.state !== 'WORKING').length;
           if (awayCount < maxAway) {
             const pois = a.room === 'studio' ? STUDIO_POIS : MAIN_POIS;
-            const poi = pois[Math.floor(Math.random() * pois.length)];
+            let poi = pois[Math.floor(Math.random() * pois.length)];
+
+            // In Badung: "Diskusi Tim" involves 2 people — 1 stays seated at desk, 1 walks over to their desk!
+            if (a.room === 'main' && poi.id === 'chat') {
+              const candidates = activeList.filter(
+                (p) => p.index !== a.index && p.state === 'WORKING' && p.chatPartnerIdx === null
+              );
+              if (candidates.length > 0) {
+                const partner = candidates[Math.floor(Math.random() * candidates.length)];
+                const standOnLeft = partner.desk.sitX > 280;
+                const standX = standOnLeft ? partner.desk.sitX - 20 : partner.desk.sitX + 20;
+                const standY = partner.desk.sitY + (partner.desk.facing === 'up' ? 3 : -3);
+                const chatPoi: PixelPOI = {
+                  id: 'chat',
+                  label: 'Diskusi Tim',
+                  x: standX,
+                  y: standY,
+                  facing: standOnLeft ? 'right' : 'left',
+                  icon: '💬',
+                };
+                a.chatPartnerIdx = partner.index;
+                a.isChatHost = false;
+                partner.chatPartnerIdx = a.index;
+                partner.isChatHost = true;
+                a.currentPOI = chatPoi;
+                a.hasDrink = null;
+                a.waypoints = buildPixelPath(
+                  'main',
+                  { x: a.desk.aisleX, y: a.desk.aisleY },
+                  chatPoi,
+                  a.desk.aisleY,
+                  partner.desk.aisleY
+                );
+                a.wpIndex = 0;
+                a.state = 'WALKING_TO_POI';
+                a.stateTimer = 0;
+                a.workDuration = 10 + Math.random() * 14;
+                return;
+              } else {
+                // Fallback to non-chat POI if no seated coworker is available
+                const nonChat = pois.filter((p) => p.id !== 'chat');
+                poi = nonChat[Math.floor(Math.random() * nonChat.length)];
+              }
+            }
+
             a.currentPOI = poi;
             a.hasDrink = null;
             const toAisle = a.room === 'studio' ? 86 : (poi.y < 140 ? 94 : 184);
@@ -1094,6 +1176,16 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
           a.drinkTimer = 24;
         }
         if (a.stateTimer >= a.breakDuration) {
+          // Release 2-person chat partner if this was a desk discussion
+          if (a.chatPartnerIdx !== null) {
+            const partner = activeList.find((p) => p.index === a.chatPartnerIdx);
+            if (partner) {
+              partner.chatPartnerIdx = null;
+              partner.isChatHost = false;
+            }
+            a.chatPartnerIdx = null;
+            a.isChatHost = false;
+          }
           if (a.currentPOI?.id === 'toilet') {
             if (a.room === 'main') {
               a.waypoints = [
@@ -1104,7 +1196,8 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
               ];
             } else {
               a.waypoints = [
-                { x: 160, y: 196 },
+                { x: 256, y: 162 },
+                { x: 256, y: 196 },
                 { x: a.desk.aisleX, y: 196 },
                 { x: a.desk.aisleX, y: a.desk.aisleY },
                 { x: a.desk.sitX, y: a.desk.sitY },
@@ -1128,7 +1221,7 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
     };
 
     const sendToToilet = (activeList: PixelAgent[], room: 'main' | 'studio') => {
-      const workingPool = activeList.filter((a) => a.state === 'WORKING');
+      const workingPool = activeList.filter((a) => a.state === 'WORKING' && !a.isChatHost);
       if (workingPool.length === 0) return false;
       const chosen = workingPool[Math.floor(Math.random() * workingPool.length)];
       chosen.hasDrink = null;
@@ -1147,7 +1240,8 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
         chosen.waypoints = [
           { x: chosen.desk.aisleX, y: chosen.desk.aisleY },
           { x: chosen.desk.aisleX, y: 196 },
-          { x: 160, y: 196 },
+          { x: 256, y: 196 },
+          { x: 256, y: 162 },
           { x: STUDIO_TOILET_POI.x, y: STUDIO_TOILET_POI.y },
         ];
       }
@@ -1241,8 +1335,12 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
           const statusEl = statusNodes[i];
           if (statusEl) {
             let statusIcon = '💻';
+            const visitorPartner =
+              a.isChatHost && a.chatPartnerIdx !== null ? agentsList[a.chatPartnerIdx] : null;
             if (a.currentPOI?.id === 'toilet' && a.state !== 'WORKING') {
               statusIcon = '🚻';
+            } else if (visitorPartner && visitorPartner.state === 'AT_POI') {
+              statusIcon = '💬';
             } else if (a.state === 'AT_POI' && a.currentPOI) {
               statusIcon = a.currentPOI.icon;
             } else if (a.state === 'WALKING_TO_POI') {
