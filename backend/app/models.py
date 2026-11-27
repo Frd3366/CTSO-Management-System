@@ -65,7 +65,7 @@ class ScheduleModel(Base):
     date = Column(String, index=True, nullable=False)  # YYYY-MM-DD
     shift_code = Column(String, nullable=False)
     jobdesk_code = Column(String, nullable=True)
-    location = Column(String, default="Badung")
+    location = Column(String, nullable=True, default=None)
     agent = Column(String, nullable=True)
     publication_status = Column(String, default="Draft")  # Draft, Published
     note = Column(Text, nullable=True)

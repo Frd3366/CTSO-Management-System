@@ -379,3 +379,26 @@ export const getAgentPillStyle = (agentName: string): AgentColorStyle => {
   return palettes[index];
 };
 
+const OFF_SHIFT_PATTERN = /\b(OFF|WEEKOFF|LIBUR|CUTI|IJIN|IZIN|SAKIT|LEAVE|SICK)\b/i;
+
+/**
+ * Determine whether a schedule/shift code represents a non-working / leave category
+ * (e.g., OFF, Weekoff, Cuti, Ijin/Izin, Sakit, Libur, or any shift marked isOff in Schedule Master).
+ */
+export const isOffShiftCode = (
+  shiftCode?: string,
+  shifts?: ShiftMasterItem[]
+): boolean => {
+  if (!shiftCode) return false;
+  const clean = shiftCode.trim().toUpperCase();
+  if (!clean) return false;
+
+  const list = shifts && shifts.length > 0 ? shifts : getMasterShifts();
+  const match = list.find((sh) => sh.code.trim().toUpperCase() === clean);
+  if (match?.isOff) return true;
+
+  if (OFF_SHIFT_PATTERN.test(clean)) return true;
+  if (match?.name && OFF_SHIFT_PATTERN.test(match.name)) return true;
+
+  return false;
+};

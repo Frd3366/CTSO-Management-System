@@ -249,9 +249,30 @@ def get_schedules(db: Session = Depends(get_db)):
         for s in items
     ]
 
+_OFF_SHIFT_REGEX = re.compile(r"\b(OFF|WEEKOFF|LIBUR|CUTI|IJIN|IZIN|SAKIT|LEAVE|SICK)\b", re.IGNORECASE)
+
+def _is_off_shift_code(shift_code: str, db: Session) -> bool:
+    if not shift_code:
+        return False
+    clean = shift_code.strip()
+    if not clean:
+        return False
+    shift = db.query(ShiftModel).filter(ShiftModel.code.ilike(clean)).first()
+    if shift and shift.is_off:
+        return True
+    if _OFF_SHIFT_REGEX.search(clean):
+        return True
+    if shift and shift.name and _OFF_SHIFT_REGEX.search(shift.name):
+        return True
+    return False
+
 @router.post("/schedules")
 def create_schedule(req: ScheduleCreate, db: Session = Depends(get_db)):
-    sched = ScheduleModel(**req.dict())
+    payload = req.dict()
+    if _is_off_shift_code(payload.get("shift_code", ""), db):
+        payload["location"] = None
+        payload["jobdesk_code"] = None
+    sched = ScheduleModel(**payload)
     db.add(sched)
     db.commit()
     db.refresh(sched)
@@ -275,7 +296,7 @@ def update_schedule(sched_id: str, req: ScheduleUpdate, db: Session = Depends(ge
         sched.jobdesk_code = data["jobdeskCode"] or None
 
     if "location" in data:
-        sched.location = data["location"]
+        sched.location = data["location"] or None
     if "agent" in data:
         sched.agent = data["agent"] or None
     if "publication_status" in data:
@@ -284,6 +305,10 @@ def update_schedule(sched_id: str, req: ScheduleUpdate, db: Session = Depends(ge
         sched.publication_status = data["publicationStatus"]
     if "note" in data:
         sched.note = data["note"]
+
+    if _is_off_shift_code(sched.shift_code, db):
+        sched.location = None
+        sched.jobdesk_code = None
 
     sched.updated_at = datetime.utcnow()
     db.commit()

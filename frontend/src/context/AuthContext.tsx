@@ -35,7 +35,7 @@ import {
   INITIAL_SPV_PERMISSION,
   INITIAL_EMPLOYEE_PERMISSION
 } from '../data/mockData';
-import { syncDynamicStyles } from '../utils/codeStyles';
+import { syncDynamicStyles, isOffShiftCode } from '../utils/codeStyles';
 import { getGoogleSheetsConfig, executeGoogleSheetsBackup } from '../utils/googleSheetsBackup';
 import { parseLocalDate, formatLocalDateIso } from '../utils/dateUtils';
 
@@ -1012,34 +1012,38 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           date >= l.startDate &&
           date <= l.endDate
       );
-      if (hasConflictLeave && shiftCode !== 'OFF') {
+      if (hasConflictLeave && !isOffShiftCode(shiftCode, shifts)) {
         return {
           valid: false,
           error: `Karyawan ${emp.name} memiliki Cuti/Izin yang telah disetujui pada tanggal ${date}.`
         };
       }
 
-      // 4. OFF Rules
-      if (shiftCode === 'OFF') {
+      // 4. OFF / Leave Rules
+      if (isOffShiftCode(shiftCode, shifts)) {
         if (jobdeskCode && jobdeskCode.trim() !== '') {
-          return { valid: false, error: 'Karyawan dengan shift OFF tidak boleh memiliki jobdesk.' };
+          return { valid: false, error: 'Karyawan dengan shift libur/cuti/ijin/sakit tidak boleh memiliki jobdesk.' };
         }
       }
 
       return { valid: true };
     },
-    [employees, schedules, leaves]
+    [employees, schedules, leaves, shifts]
   );
 
   // Add Schedule Assignment
   const addSchedule = useCallback(
     (assignment: Omit<ScheduleAssignment, 'id'>) => {
+      const isOff = isOffShiftCode(assignment.shiftCode, shifts);
+      const normalizedJobdesk = isOff ? undefined : assignment.jobdeskCode;
+      const normalizedLocation = isOff ? undefined : assignment.location;
+
       const validation = validateAssignment(
         assignment.employeeId,
         assignment.date,
         assignment.shiftCode,
-        assignment.jobdeskCode,
-        assignment.location,
+        normalizedJobdesk,
+        normalizedLocation,
         assignment.publicationStatus
       );
 
@@ -1051,6 +1055,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const newId = `sch_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
       const newRecord: ScheduleAssignment = {
         ...assignment,
+        jobdeskCode: normalizedJobdesk,
+        location: normalizedLocation,
         publicationStatus: 'Published',
         id: newId,
         employeeName: emp?.name || assignment.employeeName,
@@ -1094,7 +1100,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { success: true };
     },
-    [validateAssignment, employees, getNowWITAString, currentUser, addActivityLog]
+    [validateAssignment, employees, shifts, getNowWITAString, currentUser, addActivityLog]
   );
 
   // Update Schedule Assignment
@@ -1106,12 +1112,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const empId = updates.employeeId || current.employeeId;
       const date = updates.date || current.date;
       const shiftCode = updates.shiftCode || current.shiftCode;
+      const isOff = isOffShiftCode(shiftCode, shifts);
       
       // Accurately detect if jobdeskCode is being updated (including clearing it to undefined/null)
       const hasJobdeskUpdate = 'jobdeskCode' in updates;
-      const jobdeskCode = hasJobdeskUpdate ? (updates.jobdeskCode || undefined) : current.jobdeskCode;
+      const jobdeskCode = isOff ? undefined : (hasJobdeskUpdate ? (updates.jobdeskCode || undefined) : current.jobdeskCode);
       
-      const location = updates.location !== undefined ? updates.location : current.location;
+      const location = isOff ? undefined : (updates.location !== undefined ? updates.location : current.location);
       const publicationStatus = updates.publicationStatus || current.publicationStatus;
 
       const validation = validateAssignment(empId, date, shiftCode, jobdeskCode, location, publicationStatus, id);
@@ -1128,8 +1135,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       const afterSnapshot = {
         shiftCode,
-        jobdeskCode: shiftCode === 'OFF' ? undefined : jobdeskCode,
-        location: shiftCode === 'OFF' ? undefined : location,
+        jobdeskCode: isOff ? undefined : jobdeskCode,
+        location: isOff ? undefined : location,
         publicationStatus
       };
 
@@ -1149,6 +1156,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           };
           if (!afterSnapshot.jobdeskCode) {
             delete updated.jobdeskCode;
+          }
+          if (!afterSnapshot.location) {
+            delete updated.location;
           }
           if (!updated.agent) {
             delete updated.agent;
@@ -1297,6 +1307,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const errors: string[] = [];
       let successCount = 0;
 
+      const isOff = isOffShiftCode(shiftCode, shifts);
+
       employeeIds.forEach((empId) => {
         dates.forEach((date) => {
           const res = addSchedule({
@@ -1305,8 +1317,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             employeeCode: employees.find((e) => e.id === empId)?.employeeNo || 'CTSO',
             date,
             shiftCode,
-            jobdeskCode: shiftCode === 'OFF' ? undefined : jobdeskCode,
-            location: shiftCode === 'OFF' ? undefined : location,
+            jobdeskCode: isOff ? undefined : jobdeskCode,
+            location: isOff ? undefined : location,
             publicationStatus: 'Published'
           });
 
@@ -1320,7 +1332,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       return { success: successCount > 0, count: successCount, errors };
     },
-    [addSchedule, employees]
+    [addSchedule, employees, shifts]
   );
 
   // Copy Previous Schedule (PRD Section 5.6)

@@ -24,7 +24,7 @@ import {
   X
 } from 'lucide-react';
 import { ScheduleAssignment, WorkLocation } from '../types';
-import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, toCssSlug, parseJobdeskTasks, getAgentPillStyle } from '../utils/codeStyles';
+import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, toCssSlug, parseJobdeskTasks, getAgentPillStyle, isOffShiftCode } from '../utils/codeStyles';
 import { getStoredHolidays, saveStoredHolidays, HolidayRecord } from '../utils/holidayUtils';
 import { parseLocalDate, formatLocalDateIso, getTodayIso } from '../utils/dateUtils';
 
@@ -339,9 +339,9 @@ export const JobdeskView: React.FC = () => {
     const existing = schedules.find((s) => s.employeeId === formEmployeeId && s.date === formDate);
 
     if (existing) {
-      if (existing.shiftCode === 'OFF' && assignedCode) {
+      if (isOffShiftCode(existing.shiftCode, shifts) && assignedCode) {
         showToast(
-          `Karyawan ${emp.name} berstatus libur (OFF) pada ${formDate}. Ubah shift terlebih dahulu sebelum menetapkan jobdesk.`,
+          `Karyawan ${emp.name} berstatus libur (${existing.shiftCode}) pada ${formDate}. Ubah shift terlebih dahulu sebelum menetapkan jobdesk.`,
           'warning'
         );
         return;
@@ -752,12 +752,12 @@ export const JobdeskView: React.FC = () => {
                         <td
                           key={day.iso}
                           onClick={() => {
-                            if (assignment?.shiftCode === 'OFF') {
-                              if (!canManageJobdesk && assignment) {
+                            if (assignment && isOffShiftCode(assignment.shiftCode, shifts)) {
+                              if (!canManageJobdesk) {
                                 setSelectedAssignmentForView(assignment);
                                 return;
                               }
-                              showToast('Karyawan libur (OFF). Hari libur tidak dapat dialokasikan jobdesk.', 'warning');
+                              showToast(`Karyawan sedang libur (${assignment.shiftCode}). Hari libur tidak dapat dialokasikan jobdesk.`, 'warning');
                               return;
                             }
                             if (canManageJobdesk) {
@@ -777,9 +777,9 @@ export const JobdeskView: React.FC = () => {
                           }`}
                         >
                           {assignment ? (
-                            assignment.shiftCode === 'OFF' ? (
-                              <div className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle('OFF').card}`}>
-                                <div>WEEKLY DAY OFF</div>
+                            isOffShiftCode(assignment.shiftCode, shifts) ? (
+                              <div className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle(assignment.shiftCode).card}`}>
+                                <div>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</div>
                                 {assignment.note && (
                                   <div className="mt-1 flex items-center justify-center">
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -930,12 +930,12 @@ export const JobdeskView: React.FC = () => {
                         <td
                           key={day.iso}
                           onClick={() => {
-                            if (assignment?.shiftCode === 'OFF') {
-                              if (!canManageJobdesk && assignment) {
+                            if (assignment && isOffShiftCode(assignment.shiftCode, shifts)) {
+                              if (!canManageJobdesk) {
                                 setSelectedAssignmentForView(assignment);
                                 return;
                               }
-                              showToast('Karyawan libur (OFF). Hari libur tidak dapat dialokasikan jobdesk.', 'warning');
+                              showToast(`Karyawan sedang libur (${assignment.shiftCode}). Hari libur tidak dapat dialokasikan jobdesk.`, 'warning');
                               return;
                             }
                             if (canManageJobdesk) {
@@ -955,9 +955,9 @@ export const JobdeskView: React.FC = () => {
                           }`}
                         >
                           {assignment ? (
-                            assignment.shiftCode === 'OFF' ? (
-                              <div className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle('OFF').card}`}>
-                                <div>WEEKLY DAY OFF</div>
+                            isOffShiftCode(assignment.shiftCode, shifts) ? (
+                              <div className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle(assignment.shiftCode).card}`}>
+                                <div>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</div>
                                 {assignment.note && (
                                   <div className="mt-1 flex items-center justify-center">
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -1062,8 +1062,8 @@ export const JobdeskView: React.FC = () => {
                 .map((e) => {
                   const sched = schedules.find((s) => s.employeeId === e.id && s.date === formDate);
                   const shiftDesc = sched
-                    ? sched.shiftCode === 'OFF'
-                      ? 'WEEKLY DAY OFF'
+                    ? isOffShiftCode(sched.shiftCode, shifts)
+                      ? (sched.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : sched.shiftCode)
                       : `Shift ${sched.shiftCode} (${getShiftHours(sched.shiftCode)})`
                     : 'Belum Ada Shift';
                   return (
@@ -1092,8 +1092,8 @@ export const JobdeskView: React.FC = () => {
                     getShiftBadgeStyle(selectedEmployeeSchedule.shiftCode).card
                   }`}
                 >
-                  {selectedEmployeeSchedule.shiftCode === 'OFF'
-                    ? 'WEEKLY DAY OFF'
+                  {isOffShiftCode(selectedEmployeeSchedule.shiftCode, shifts)
+                    ? (selectedEmployeeSchedule.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : selectedEmployeeSchedule.shiftCode)
                     : `SHIFT: ${selectedEmployeeSchedule.shiftCode}`}
                 </span>
               ) : (
@@ -1109,14 +1109,16 @@ export const JobdeskView: React.FC = () => {
                   <div className="text-slate-700 dark:text-gray-300">
                     Jam Kerja: <strong className="font-mono text-slate-900 dark:text-white">{getShiftHours(selectedEmployeeSchedule.shiftCode)}</strong>
                   </div>
-                  <div className="text-slate-700 dark:text-gray-300 flex items-center gap-1">
-                    <MapPin className="w-3 h-3 text-slate-400" />
-                    <span>Hub: <strong className="text-slate-900 dark:text-white">{selectedEmployeeSchedule.location || 'Badung'}</strong></span>
-                  </div>
+                  {!isOffShiftCode(selectedEmployeeSchedule.shiftCode, shifts) && (
+                    <div className="text-slate-700 dark:text-gray-300 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-slate-400" />
+                      <span>Hub: <strong className="text-slate-900 dark:text-white">{selectedEmployeeSchedule.location || 'Badung'}</strong></span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Workload Distribution for this specific Shift on this Date */}
-                {selectedEmployeeSchedule.shiftCode !== 'OFF' && (
+                {!isOffShiftCode(selectedEmployeeSchedule.shiftCode, shifts) && (
                   <div className="pt-2 border-t border-slate-200/80 dark:border-white/10">
                     <div className="flex items-center justify-between text-[11px] font-bold text-slate-700 dark:text-gray-300 mb-1.5">
                       <span>Pemerataan Beban Kerja Shift {selectedEmployeeSchedule.shiftCode}:</span>
@@ -1153,10 +1155,10 @@ export const JobdeskView: React.FC = () => {
             )}
           </div>
 
-          {selectedEmployeeSchedule?.shiftCode === 'OFF' && (
+          {selectedEmployeeSchedule && isOffShiftCode(selectedEmployeeSchedule.shiftCode, shifts) && (
             <div className="p-3 rounded-xl bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/50 text-rose-700 dark:text-rose-300 text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
-              <span>Karyawan ini berstatus <strong>WEEKLY DAY OFF (Libur)</strong> pada tanggal ini. Jobdesk tidak dapat dialokasikan saat hari libur.</span>
+              <span>Karyawan ini berstatus <strong>{selectedEmployeeSchedule.shiftCode === 'OFF' ? 'WEEKLY DAY OFF (Libur)' : `${selectedEmployeeSchedule.shiftCode} (Libur)`}</strong> pada tanggal ini. Jobdesk tidak dapat dialokasikan saat hari libur.</span>
             </div>
           )}
 
@@ -1174,7 +1176,7 @@ export const JobdeskView: React.FC = () => {
               <select
                 value={formJobdeskCode}
                 onChange={(e) => setFormJobdeskCode(e.target.value)}
-                disabled={selectedEmployeeSchedule?.shiftCode === 'OFF'}
+                disabled={Boolean(selectedEmployeeSchedule && isOffShiftCode(selectedEmployeeSchedule.shiftCode, shifts))}
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#202023] disabled:opacity-50 disabled:cursor-not-allowed text-xs text-slate-800 dark:text-white font-bold focus:outline-none focus:border-[#F9C900]"
                 required
               >
@@ -1368,7 +1370,7 @@ export const JobdeskView: React.FC = () => {
               </button>
               <button
                 type="submit"
-                disabled={selectedEmployeeSchedule?.shiftCode === 'OFF'}
+                disabled={Boolean(selectedEmployeeSchedule && isOffShiftCode(selectedEmployeeSchedule.shiftCode, shifts))}
                 className="px-5 py-2 rounded-xl bg-[#F9C900] hover:bg-[#E5B800] disabled:opacity-40 disabled:cursor-not-allowed text-[#111111] border border-[#E5B800] text-xs font-bold shadow-sm"
               >
                 Simpan Jobdesk
@@ -1432,13 +1434,17 @@ export const JobdeskView: React.FC = () => {
                 <div>
                   <span className="text-slate-500 dark:text-gray-400 text-[11px]">Peran Jobdesk:</span>
                   <div className="font-bold text-slate-800 dark:text-white mt-0.5">
-                    {jobdesks.find((j) => j.code === selectedAssignmentForView.jobdeskCode)?.name || selectedAssignmentForView.jobdeskCode || '-'}
+                    {isOffShiftCode(selectedAssignmentForView.shiftCode, shifts)
+                      ? '-'
+                      : (jobdesks.find((j) => j.code === selectedAssignmentForView.jobdeskCode)?.name || selectedAssignmentForView.jobdeskCode || '-')}
                   </div>
                 </div>
                 <div>
                   <span className="text-slate-500 dark:text-gray-400 text-[11px]">Lokasi Tugas:</span>
                   <div className="font-bold text-slate-800 dark:text-white mt-0.5">
-                    {selectedAssignmentForView.location || 'Badung'}
+                    {isOffShiftCode(selectedAssignmentForView.shiftCode, shifts)
+                      ? '-'
+                      : (selectedAssignmentForView.location || 'Badung')}
                   </div>
                 </div>
                 <div>

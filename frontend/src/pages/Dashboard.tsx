@@ -17,7 +17,7 @@ import {
   CheckCircle2,
   Trash2
 } from 'lucide-react';
-import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor } from '../utils/codeStyles';
+import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, isOffShiftCode } from '../utils/codeStyles';
 import { ModernDatePicker } from '../components/common/ModernDatePicker';
 
 export const Dashboard: React.FC = () => {
@@ -63,16 +63,9 @@ export const Dashboard: React.FC = () => {
     return m;
   }, [employees]);
 
-  // Helper to determine if a shift code counts as Off/Libur/Cuti (Strict matching)
+  // Helper to determine if a shift code counts as Off/Libur/Cuti/Ijin/Sakit/Weekoff
   const isOffShift = useCallback(
-    (shiftCode: string): boolean => {
-      if (!shiftCode) return false;
-      const clean = shiftCode.trim().toUpperCase();
-      const match = shifts.find((sh) => sh.code.trim().toUpperCase() === clean);
-      if (match) return Boolean(match.isOff);
-      if (['OFF', 'LIBUR', 'CUTI', 'DAY OFF', 'REST DAY'].includes(clean)) return true;
-      return false;
-    },
+    (shiftCode: string): boolean => isOffShiftCode(shiftCode, shifts),
     [shifts]
   );
 
@@ -724,10 +717,14 @@ export const Dashboard: React.FC = () => {
                             )}
                           </td>
                           <td className="py-3 px-4 whitespace-nowrap">
-                            <span className="inline-flex items-center gap-1.5 text-[#0F172A] dark:text-gray-200 font-medium whitespace-nowrap">
-                              <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
-                              {item.location || emp?.defaultLocation || '-'}
-                            </span>
+                            {isOff ? (
+                              <span className="text-[10px] text-slate-400 dark:text-gray-500">-</span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1.5 text-[#0F172A] dark:text-gray-200 font-medium whitespace-nowrap">
+                                <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" aria-hidden="true" />
+                                {item.location || emp?.defaultLocation || '-'}
+                              </span>
+                            )}
                           </td>
                           <td className="py-3 px-4 text-slate-600 dark:text-gray-300 font-mono text-[11px] whitespace-nowrap">
                             {getShiftHours(item.shiftCode)}
@@ -865,7 +862,7 @@ export const Dashboard: React.FC = () => {
                             {item.employeeName}
                           </div>
                           <div className="text-[11px] text-slate-500 dark:text-gray-400 font-mono mt-0.5">
-                            {item.employeeCode} &bull; {item.location || emp?.defaultLocation || 'Hub'}
+                            {item.employeeCode}{!isOff ? ` • ${item.location || emp?.defaultLocation || 'Hub'}` : ''}
                           </div>
                           {(item.role || emp?.role || emp?.level) && (
                             <div className="text-[10px] text-slate-400 dark:text-gray-500 mt-0.5">

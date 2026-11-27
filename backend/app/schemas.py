@@ -87,7 +87,7 @@ class ScheduleCreate(BaseModel):
     date: str
     shift_code: str
     jobdesk_code: Optional[str] = None
-    location: str = "Badung"
+    location: Optional[str] = None
     agent: Optional[str] = None
     publication_status: str = "Draft"
     note: Optional[str] = None
@@ -109,7 +109,7 @@ class BulkScheduleCreate(BaseModel):
     end_date: str
     shift_code: str
     jobdesk_code: Optional[str] = None
-    location: str = "Badung"
+    location: Optional[str] = None
     publication_status: str = "Draft"
 
 # Roster Request

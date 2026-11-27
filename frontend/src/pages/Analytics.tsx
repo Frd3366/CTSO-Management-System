@@ -27,7 +27,8 @@ import {
   getShiftBadgeStyle,
   getJobdeskBadgeStyle,
   getAgentPillStyle,
-  getContrastTextColor
+  getContrastTextColor,
+  isOffShiftCode
 } from '../utils/codeStyles';
 import { getStoredHolidays } from '../utils/holidayUtils';
 import {
@@ -639,15 +640,8 @@ export const Analytics: React.FC = () => {
   // Holidays
   const holidays = useMemo(() => getStoredHolidays(), []);
 
-  // Helper to check if a shift is Off
-  const isOffShift = (shiftCode: string): boolean => {
-    if (!shiftCode) return false;
-    const clean = shiftCode.trim().toUpperCase();
-    const match = shifts.find((sh) => sh.code.trim().toUpperCase() === clean);
-    if (match) return Boolean(match.isOff);
-    if (['OFF', 'LIBUR', 'CUTI', 'DAY OFF', 'REST DAY'].includes(clean)) return true;
-    return false;
-  };
+  // Helper to check if a shift is Off / Leave
+  const isOffShift = (shiftCode: string): boolean => isOffShiftCode(shiftCode, shifts);
 
   // Month navigation
   const handleNavigateMonth = (direction: 'prev' | 'next') => {

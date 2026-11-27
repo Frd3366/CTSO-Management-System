@@ -6,7 +6,7 @@ import { ModernDatePicker } from '../components/common/ModernDatePicker';
 import { GoogleSheetsBackupModal } from '../components/common/GoogleSheetsBackupModal';
 import { getGoogleSheetsConfig, GoogleSheetsBackupConfig } from '../utils/googleSheetsBackup';
 import { ScheduleAssignment, WorkLocation } from '../types';
-import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, toCssSlug } from '../utils/codeStyles';
+import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, toCssSlug, isOffShiftCode } from '../utils/codeStyles';
 import { getStoredHolidays, saveStoredHolidays, HolidayRecord } from '../utils/holidayUtils';
 import { parseLocalDate, formatLocalDateIso, getTodayIso, getWeekAheadIso, formatDateDMY } from '../utils/dateUtils';
 import {
@@ -137,9 +137,9 @@ export const ShiftSchedule: React.FC = () => {
 
   // Helper to get formatted hours for any shift code
   const getShiftHours = (code: string) => {
+    if (isOffShiftCode(code, shifts)) return 'Libur';
     const sh = shifts.find((s) => s.code === code);
     if (!sh) return '';
-    if (sh.isOff) return 'Libur';
     return `${sh.startTime} - ${sh.endTime}`;
   };
 
@@ -301,7 +301,7 @@ export const ShiftSchedule: React.FC = () => {
       return;
     }
 
-    const isOff = formShiftCode === 'OFF';
+    const isOff = isOffShiftCode(formShiftCode, shifts);
     const existing = editingId ? schedules.find((s) => s.id === editingId) : null;
 
     if (editingId) {
@@ -394,12 +394,13 @@ export const ShiftSchedule: React.FC = () => {
       cur.setDate(cur.getDate() + 1);
     }
 
+    const isBulkOff = isOffShiftCode(bulkShiftCode, shifts);
     const res = bulkAssignSchedule(
       bulkEmployeeIds,
       dates,
       bulkShiftCode,
       undefined,
-      'Badung'
+      isBulkOff ? undefined : 'Badung'
     );
 
     if (res.count > 0) {
@@ -424,15 +425,18 @@ export const ShiftSchedule: React.FC = () => {
   // Export CSV Handler (PRD 12.3)
   const handleExportCSV = () => {
     const headers = ['Tanggal', 'Employee ID', 'Nama Karyawan', 'Shift', 'Jobdesk', 'Lokasi', 'Status'];
-    const rows = visibleSchedules.map((s) => [
-      s.date,
-      s.employeeCode,
-      `"${s.employeeName}"`,
-      s.shiftCode,
-      s.jobdeskCode || '-',
-      s.location || '-',
-      s.publicationStatus
-    ]);
+    const rows = visibleSchedules.map((s) => {
+      const isOff = isOffShiftCode(s.shiftCode, shifts);
+      return [
+        s.date,
+        s.employeeCode,
+        `"${s.employeeName}"`,
+        s.shiftCode,
+        isOff ? '-' : (s.jobdeskCode || '-'),
+        isOff ? '-' : (s.location || '-'),
+        s.publicationStatus
+      ];
+    });
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
     const encodedUri = encodeURI(csvContent);
@@ -637,6 +641,7 @@ export const ShiftSchedule: React.FC = () => {
       {viewMode === 'daily' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3.5">
           {shifts.map((sh) => {
+            const shIsOff = isOffShiftCode(sh.code, shifts);
             const items = visibleSchedules.filter(
               (s) => s.date === currentDateStr && s.shiftCode === sh.code
             );
@@ -661,7 +666,7 @@ export const ShiftSchedule: React.FC = () => {
                       {sh.code}
                     </span>
                     <div className="text-[10px] text-slate-500 dark:text-gray-400 font-mono mt-1">
-                      {sh.isOff ? 'Libur' : `${sh.startTime} - ${sh.endTime}`}
+                      {shIsOff ? 'Libur' : `${sh.startTime} - ${sh.endTime}`}
                     </div>
                   </div>
                   <span className="px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-gray-200 border border-slate-200 dark:border-white/10 font-mono">
@@ -713,15 +718,19 @@ export const ShiftSchedule: React.FC = () => {
                         </div>
 
                         <div className="pt-1.5 border-t border-current/15 flex flex-col items-center justify-center text-center">
-                          <span className="font-mono font-black text-xs text-current">
+                          <span className="font-mono font-black text-xs text-current text-center">
                             {sh.code}
                           </span>
-                          <span className="text-[10px] text-current opacity-85 font-mono mt-0.5">
-                            {sh.isOff ? 'Libur' : `${sh.startTime} - ${sh.endTime}`}
-                          </span>
-                          <span className="text-[9px] font-semibold text-current opacity-75 mt-0.5">
-                            {item.location || 'Badung'}
-                          </span>
+                          {!shIsOff && (
+                            <>
+                              <span className="text-[10px] text-current opacity-85 font-mono mt-0.5">
+                                {`${sh.startTime} - ${sh.endTime}`}
+                              </span>
+                              <span className="text-[9px] font-semibold text-current opacity-75 mt-0.5">
+                                {item.location || 'Badung'}
+                              </span>
+                            </>
+                          )}
                         </div>
                       </button>
                     ))
@@ -853,19 +862,24 @@ export const ShiftSchedule: React.FC = () => {
                           }`}
                         >
                           {assignment ? (
-                            assignment.shiftCode === 'OFF' ? (
-                              <div className={`py-1.5 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle('OFF').card}`}>
-                                <div className="leading-tight">WEEKLY DAY OFF</div>
-                                <div className="text-[8.5px] font-semibold opacity-75 mt-0.5 leading-tight">
-                                  {assignment.location || 'Badung'}
-                                </div>
-                                {assignment.note && (
-                                  <div className="mt-1 flex items-center justify-center">
+                            isOffShiftCode(assignment.shiftCode, shifts) ? (
+                              <div
+                                className={`py-2 px-1.5 rounded-xl border-0 flex flex-col items-center justify-center text-center font-black text-[10px] tracking-wider uppercase transition-all ${
+                                  getShiftBadgeStyle(assignment.shiftCode).card
+                                } ${
+                                  assignment.publicationStatus === 'Draft'
+                                    ? 'ring-2 ring-amber-400/90 ring-offset-1'
+                                    : ''
+                                }`}
+                              >
+                                <div className="font-mono font-black text-xs text-center w-full leading-tight flex items-center justify-center gap-1">
+                                  <span>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</span>
+                                  {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
                                       <StickyNote className="w-2.5 h-2.5" aria-hidden="true" />
                                     </span>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             ) : (
                               <div
@@ -1010,47 +1024,52 @@ export const ShiftSchedule: React.FC = () => {
                           }`}
                         >
                           {assignment ? (
-                            assignment.shiftCode === 'OFF' ? (
-                              <div className={`py-1.5 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle('OFF').card}`}>
-                                <div className="leading-tight">WEEKLY DAY OFF</div>
-                                <div className="text-[8.5px] font-semibold opacity-75 mt-0.5 leading-tight">
-                                  {assignment.location || 'Badung'}
-                                </div>
-                                {assignment.note && (
-                                  <div className="mt-1 flex items-center justify-center">
+                            isOffShiftCode(assignment.shiftCode, shifts) ? (
+                              <div
+                                className={`py-2 px-1.5 rounded-xl border-0 flex flex-col items-center justify-center text-center font-black text-[10px] tracking-wider uppercase transition-all ${
+                                  getShiftBadgeStyle(assignment.shiftCode).card
+                                } ${
+                                  assignment.publicationStatus === 'Draft'
+                                    ? 'ring-2 ring-amber-400/90 ring-offset-1'
+                                    : ''
+                                }`}
+                              >
+                                <div className="font-mono font-black text-xs text-center w-full leading-tight flex items-center justify-center gap-1">
+                                  <span>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</span>
+                                  {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
                                       <StickyNote className="w-2.5 h-2.5" aria-hidden="true" />
                                     </span>
-                                  </div>
-                                )}
+                                  )}
+                                </div>
                               </div>
                             ) : (
                               <div
-                                className={`py-1.5 px-2 rounded-xl border-0 flex flex-col justify-between text-left transition-all ${
+                                className={`py-1.5 px-1.5 rounded-xl border-0 flex flex-col items-center justify-center text-center transition-all ${
                                   getShiftBadgeStyle(assignment.shiftCode).card
+                                } ${
+                                  assignment.publicationStatus === 'Draft'
+                                    ? 'ring-2 ring-amber-400/90 ring-offset-1'
+                                    : ''
                                 }`}
                               >
-                                <div className="flex items-center justify-between">
-                                  <span className="font-mono font-black text-xs uppercase tracking-tight">
-                                    {assignment.shiftCode}
-                                  </span>
-                                  <div className="flex items-center gap-1">
-                                    {assignment.note && (
-                                      <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
-                                        <StickyNote className="w-3 h-3" aria-hidden="true" />
-                                      </span>
-                                    )}
-                                    {assignment.jobdeskCode && (
-                                      <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-black/10 dark:bg-white/15 text-current">
-                                        {assignment.jobdeskCode}
-                                      </span>
-                                    )}
-                                  </div>
+                                <div className="font-mono font-black text-xs text-center w-full uppercase tracking-tight leading-tight flex items-center justify-center gap-1">
+                                  <span>{assignment.shiftCode}</span>
+                                  {assignment.note && (
+                                    <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
+                                      <StickyNote className="w-3 h-3" aria-hidden="true" />
+                                    </span>
+                                  )}
                                 </div>
-                                <div className="text-[9px] opacity-80 mt-0.5 font-mono leading-tight">
+                                {assignment.jobdeskCode && (
+                                  <span className="mt-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-black/10 dark:bg-white/15 text-current">
+                                    {assignment.jobdeskCode}
+                                  </span>
+                                )}
+                                <div className="text-[9.5px] font-mono font-bold text-center mt-0.5 opacity-90 leading-tight">
                                   {getShiftHours(assignment.shiftCode)}
                                 </div>
-                                <div className="text-[8.5px] font-semibold opacity-75 mt-0.5 leading-tight truncate">
+                                <div className="text-[8.5px] font-semibold text-center mt-0.5 opacity-75 truncate max-w-full leading-tight">
                                   {assignment.location || 'Badung'}
                                 </div>
                               </div>
@@ -1125,7 +1144,7 @@ export const ShiftSchedule: React.FC = () => {
             </div>
           </div>
 
-          {formShiftCode !== 'OFF' && (
+          {!isOffShiftCode(formShiftCode, shifts) && (
             <div className="grid grid-cols-2 gap-3 p-3 bg-[#F4F4F4] dark:bg-white/5 rounded-xl border border-slate-200/60 dark:border-white/10">
               <div>
                 <label className="block text-xs font-bold text-slate-700 dark:text-gray-200 mb-1">
@@ -1275,13 +1294,13 @@ export const ShiftSchedule: React.FC = () => {
                 <div>
                   <span className="text-slate-500 dark:text-gray-400 text-[11px]">Jobdesk:</span>
                   <div className="font-bold text-slate-800 dark:text-white mt-0.5">
-                    {viewingAssignment.jobdeskCode || '-'}
+                    {isOffShiftCode(viewingAssignment.shiftCode, shifts) ? '-' : (viewingAssignment.jobdeskCode || '-')}
                   </div>
                 </div>
                 <div>
                   <span className="text-slate-500 dark:text-gray-400 text-[11px]">Lokasi Hub:</span>
                   <div className="font-bold text-slate-800 dark:text-white mt-0.5">
-                    {viewingAssignment.location || '-'}
+                    {isOffShiftCode(viewingAssignment.shiftCode, shifts) ? '-' : (viewingAssignment.location || '-')}
                   </div>
                 </div>
               </div>
