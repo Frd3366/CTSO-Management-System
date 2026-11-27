@@ -5,6 +5,7 @@ import { ModalProvider } from './context/ModalContext';
 import { ToastProvider } from './context/ToastContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { AppLayout } from './components/layout/AppLayout';
+import { Landing } from './pages/Landing';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
 import { ShiftSchedule } from './pages/ShiftSchedule';
@@ -53,19 +54,18 @@ export const App: React.FC = () => {
           <AuthProvider>
             <ToastProvider>
               <Routes>
-                {/* Public Login Route */}
+                {/* Public Dual-View 3D Landing Page & Login Route */}
+                <Route path="/" element={<Landing />} />
                 <Route path="/login" element={<Login />} />
 
                 {/* Protected App Routes */}
                 <Route
-                  path="/"
                   element={
                     <ProtectedRoute>
                       <AppLayout />
                     </ProtectedRoute>
                   }
                 >
-                  <Route index element={<Navigate to="/dashboard" replace />} />
                   <Route path="dashboard" element={<Dashboard />} />
                   <Route path="schedule" element={<ShiftSchedule />} />
                   <Route path="jobdesk" element={<JobdeskView />} />
@@ -157,7 +157,7 @@ export const App: React.FC = () => {
                 </Route>
 
                 {/* Catch all */}
-                <Route path="*" element={<Navigate to="/dashboard" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </ToastProvider>
           </AuthProvider>

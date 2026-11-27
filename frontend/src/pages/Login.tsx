@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Mail, Lock, ArrowRight, UserPlus, LogIn, User as UserIcon, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
+import { Mail, Lock, ArrowLeft, ArrowRight, UserPlus, LogIn, User as UserIcon, Eye, EyeOff, AlertCircle, X } from 'lucide-react';
 import cmsLogo from '../assets/cms-logo.jpeg';
 import cloudBg from '../assets/cloud-bg.jpg';
 
@@ -118,6 +118,15 @@ export const Login: React.FC = () => {
     >
       {/* Soft backdrop overlay */}
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />
+
+      {/* Back to Live Animation Workspace button */}
+      <Link
+        to="/"
+        className="fixed top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-900 text-xs font-bold shadow-lg border border-white/60 backdrop-blur-md transition-colors"
+      >
+        <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+        <span>Kembali</span>
+      </Link>
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
         {/* Brand Header */}

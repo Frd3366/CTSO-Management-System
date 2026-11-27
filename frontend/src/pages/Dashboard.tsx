@@ -15,7 +15,8 @@ import {
   ArrowRight,
   Briefcase,
   CheckCircle2,
-  Trash2
+  Trash2,
+  Monitor
 } from 'lucide-react';
 import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, isOffShiftCode } from '../utils/codeStyles';
 import { ModernDatePicker } from '../components/common/ModernDatePicker';
@@ -271,6 +272,15 @@ export const Dashboard: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate('/')}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#FFD416] hover:bg-[#E5BD00] text-[#202020] text-xs font-extrabold border border-[#E5BD00] shadow-gx transition-colors cursor-pointer"
+          >
+            <Monitor className="w-3.5 h-3.5" aria-hidden="true" />
+            <span>Live Workspace</span>
+          </button>
+
           <div className="w-56 sm:w-64">
             <ModernDatePicker
               value={selectedDate}

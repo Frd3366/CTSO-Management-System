@@ -20,7 +20,11 @@ export const apiClient = {
   async isBackendAvailable(): Promise<boolean> {
     try {
       const res = await fetch(`${API_BASE}/health`, { signal: AbortSignal.timeout(2000) });
-      return res.ok;
+      if (!res.ok) return false;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return false;
+      const json = await res.json();
+      return Boolean(json);
     } catch {
       return false;
     }
@@ -32,6 +36,8 @@ export const apiClient = {
         headers: getAuthHeaders()
       });
       if (!res.ok) return fallback;
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) return fallback;
       return await res.json();
     } catch {
       return fallback;
@@ -45,7 +51,13 @@ export const apiClient = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      const json = await res.json();
+      const text = await res.text();
+      let json: any = {};
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch {
+        return { success: false, error: 'Backend tidak merespons JSON valid. Pastikan server backend berjalan.' };
+      }
       if (!res.ok) return { success: false, error: json.detail || 'Request failed' };
       return { success: true, data: json };
     } catch (e: any) {
@@ -60,7 +72,13 @@ export const apiClient = {
         headers: getAuthHeaders(),
         body: JSON.stringify(data)
       });
-      const json = await res.json();
+      const text = await res.text();
+      let json: any = {};
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch {
+        return { success: false, error: 'Backend tidak merespons JSON valid.' };
+      }
       if (!res.ok) return { success: false, error: json.detail || 'Request failed' };
       return { success: true, data: json };
     } catch (e: any) {
