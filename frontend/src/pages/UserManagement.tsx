@@ -203,8 +203,6 @@ export const UserManagement: React.FC = () => {
           level: formRole === 'Admin' ? 'Head' : formRole === 'SPV' ? 'SPV' : 'Junior',
           email: cleanEmail,
           phone: '-',
-          teamId: 'team_core',
-          teamName: 'Team Core Network Ops',
           defaultLocation: 'Badung',
           defaultJobdesk: undefined,
           status: formStatus,
@@ -222,8 +220,7 @@ export const UserManagement: React.FC = () => {
         role: formRole,
         status: formStatus,
         password: formPassword || 'admin',
-        employeeId: empId,
-        department: formRole === 'Admin' ? 'Central IT & Operations' : 'Operations & Infrastructure'
+        employeeId: empId
       });
 
       showToast(`Akun pengguna ${formName} berhasil dibuat dengan role ${formRole}!`, 'success');

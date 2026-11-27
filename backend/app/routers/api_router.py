@@ -35,6 +35,7 @@ def get_employees(db: Session = Depends(get_db)):
             "id": e.id,
             "employeeNo": e.employee_no,
             "name": e.name,
+            "nickname": e.nickname or "",
             "role": e.role,
             "level": e.level or "Junior",
             "status": e.status,
@@ -49,6 +50,7 @@ def get_employees(db: Session = Depends(get_db)):
 def create_employee(req: EmployeeCreate, db: Session = Depends(get_db)):
     clean_no = (req.employee_no or "").strip()
     clean_name = (req.name or "").strip()
+    clean_nickname = (req.nickname or "").strip() or None
     clean_email = (req.email or "").strip().lower() if req.email else ""
 
     if db.query(EmployeeModel).filter(EmployeeModel.employee_no == clean_no).first():
@@ -63,6 +65,7 @@ def create_employee(req: EmployeeCreate, db: Session = Depends(get_db)):
     data = req.dict()
     data["employee_no"] = clean_no
     data["name"] = clean_name
+    data["nickname"] = clean_nickname
     if clean_email:
         data["email"] = clean_email
     emp = EmployeeModel(**data)
@@ -78,6 +81,8 @@ def update_employee(emp_id: str, req: EmployeeUpdate, db: Session = Depends(get_
         raise HTTPException(status_code=404, detail="Karyawan tidak ditemukan.")
 
     updates = req.dict(exclude_unset=True)
+    if "nickname" in updates:
+        updates["nickname"] = (updates["nickname"] or "").strip() or None
     if "name" in updates and updates["name"]:
         clean_name = updates["name"].strip()
         dup_name = db.query(EmployeeModel).filter(
@@ -569,6 +574,7 @@ def pull_all_data(db: Session = Depends(get_db)):
             "id": e.id,
             "employeeNo": e.employee_no,
             "name": e.name,
+            "nickname": e.nickname or "",
             "role": e.role,
             "level": e.level or "Junior",
             "status": e.status,
@@ -682,6 +688,8 @@ def push_all_data(payload: dict, db: Session = Depends(get_db), current_user: Us
             emp_email = (emp_data.get("email") or "").strip().lower()
             if exist:
                 exist.name = emp_data.get("name", exist.name)
+                if "nickname" in emp_data:
+                    exist.nickname = (emp_data.get("nickname") or "").strip() or None
                 exist.role = emp_data.get("role", exist.role)
                 if emp_data.get("level") is not None:
                     exist.level = emp_data.get("level")
@@ -694,6 +702,7 @@ def push_all_data(payload: dict, db: Session = Depends(get_db), current_user: Us
                     id=emp_data.get("id"),
                     employee_no=emp_data.get("employeeNo", ""),
                     name=emp_data.get("name", ""),
+                    nickname=(emp_data.get("nickname") or "").strip() or None,
                     role=emp_data.get("role", "Employee"),
                     level=emp_data.get("level", "Junior"),
                     status=emp_data.get("status", "active"),

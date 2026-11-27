@@ -1,10 +1,14 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { RefreshCw } from 'lucide-react';
 
 export interface OfficeAvatarData {
   id: string;
   name: string;
+  nickname?: string;
+  fullName?: string;
   role: string;
   shiftCode: string;
+  shiftColor?: string;
   jobdeskCode: string;
   jobdeskColor?: string;
   location: 'Badung' | 'Denpasar';
@@ -38,6 +42,7 @@ interface Point {
 
 interface PixelDesk {
   id: number;
+  pic?: string;
   x: number;
   y: number;
   sitX: number;
@@ -95,19 +100,127 @@ const MAIN_W = 384;
 const MAIN_H = 272;
 
 const MAIN_DESKS: PixelDesk[] = [
-  // Top Row: PC 1..4 (facing up toward TV/windows)
-  { id: 1, x: 64, y: 54, sitX: 64, sitY: 70, aisleX: 64, aisleY: 94, facing: 'up' },
-  { id: 2, x: 144, y: 54, sitX: 144, sitY: 70, aisleX: 144, aisleY: 94, facing: 'up' },
-  { id: 3, x: 224, y: 54, sitX: 224, sitY: 70, aisleX: 224, aisleY: 94, facing: 'up' },
-  { id: 4, x: 304, y: 54, sitX: 304, sitY: 70, aisleX: 304, aisleY: 94, facing: 'up' },
-  // Middle Row: PC 5..7 (right below coffee cabinet, facing up)
-  { id: 5, x: 148, y: 148, sitX: 148, sitY: 164, aisleX: 148, aisleY: 184, facing: 'up' },
-  { id: 6, x: 224, y: 148, sitX: 224, sitY: 164, aisleX: 224, aisleY: 184, facing: 'up' },
-  { id: 7, x: 300, y: 148, sitX: 300, sitY: 164, aisleX: 300, aisleY: 184, facing: 'up' },
-  // Bottom Row: PC 8, 9, 10 (facing down toward AC wall; PC 11 at x=64 left standby)
-  { id: 8, x: 304, y: 230, sitX: 304, sitY: 214, aisleX: 304, aisleY: 184, facing: 'down' },
-  { id: 9, x: 224, y: 230, sitX: 224, sitY: 214, aisleX: 224, aisleY: 184, facing: 'down' },
-  { id: 10, x: 144, y: 230, sitX: 144, sitY: 214, aisleX: 144, aisleY: 184, facing: 'down' },
+  // Top Row: PC 1..4 (facing up toward TV/windows) — Widek, Ima, Diah, Ayu
+  { id: 1, pic: 'widek', x: 64, y: 54, sitX: 64, sitY: 70, aisleX: 64, aisleY: 94, facing: 'up' },
+  { id: 2, pic: 'ima', x: 144, y: 54, sitX: 144, sitY: 70, aisleX: 144, aisleY: 94, facing: 'up' },
+  { id: 3, pic: 'diah', x: 224, y: 54, sitX: 224, sitY: 70, aisleX: 224, aisleY: 94, facing: 'up' },
+  { id: 4, pic: 'ayu', x: 304, y: 54, sitX: 304, sitY: 70, aisleX: 304, aisleY: 94, facing: 'up' },
+  // Middle Row: PC 5..7 (right below coffee cabinet, facing up) — Untung, Ferdi, Dimas
+  { id: 5, pic: 'untung', x: 148, y: 148, sitX: 148, sitY: 164, aisleX: 148, aisleY: 184, facing: 'up' },
+  { id: 6, pic: 'ferdi', x: 224, y: 148, sitX: 224, sitY: 164, aisleX: 224, aisleY: 184, facing: 'up' },
+  { id: 7, pic: 'dimas', x: 300, y: 148, sitX: 300, sitY: 164, aisleX: 300, aisleY: 184, facing: 'up' },
+  // Bottom Row: PC 8..11 (facing down toward AC wall) — Hendry, Syarif, Ilda, Novi
+  { id: 8, pic: 'hendry', x: 64, y: 230, sitX: 64, sitY: 214, aisleX: 64, aisleY: 184, facing: 'down' },
+  { id: 9, pic: 'syarif', x: 144, y: 230, sitX: 144, sitY: 214, aisleX: 144, aisleY: 184, facing: 'down' },
+  { id: 10, pic: 'ilda', x: 224, y: 230, sitX: 224, sitY: 214, aisleX: 224, aisleY: 184, facing: 'down' },
+  { id: 11, pic: 'novi', x: 304, y: 230, sitX: 304, sitY: 214, aisleX: 304, aisleY: 184, facing: 'down' },
+];
+
+const MAIN_TOILET_POI: PixelPOI = {
+  id: 'toilet',
+  label: 'Ke Toilet',
+  x: -16,
+  y: 144,
+  facing: 'left',
+  icon: '🚻',
+};
+
+const STUDIO_TOILET_POI: PixelPOI = {
+  id: 'toilet',
+  label: 'Ke Toilet',
+  x: 160,
+  y: 248,
+  facing: 'down',
+  icon: '🚻',
+};
+
+function assignMainDeskSlots(roster: OfficeAvatarData[]): Array<OfficeAvatarData | null> {
+  const slots: Array<OfficeAvatarData | null> = new Array(MAIN_DESKS.length).fill(null);
+  const unassigned: OfficeAvatarData[] = [];
+
+  const findPicDesk = (staff: OfficeAvatarData, exactNicknameOnly: boolean): number => {
+    const nick = (staff.nickname || '').trim().toLowerCase();
+    if (nick) {
+      const idx = MAIN_DESKS.findIndex((d, i) => !slots[i] && d.pic === nick);
+      if (idx >= 0) return idx;
+    }
+    if (exactNicknameOnly) return -1;
+    const tokens = `${staff.nickname || ''} ${staff.fullName || ''} ${staff.name || ''}`
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter(Boolean);
+    return MAIN_DESKS.findIndex((d, i) => !slots[i] && d.pic && tokens.includes(d.pic));
+  };
+
+  // Pass 1: exact nickname PIC match
+  const afterPass1: OfficeAvatarData[] = [];
+  for (const staff of roster) {
+    const deskIdx = findPicDesk(staff, true);
+    if (deskIdx >= 0) slots[deskIdx] = staff;
+    else afterPass1.push(staff);
+  }
+
+  // Pass 2: word match on full name / display name
+  for (const staff of afterPass1) {
+    const deskIdx = findPicDesk(staff, false);
+    if (deskIdx >= 0) slots[deskIdx] = staff;
+    else unassigned.push(staff);
+  }
+
+  // Pass 3: fill remaining empty desks with non-PIC staff
+  let emptyCursor = 0;
+  for (const staff of unassigned) {
+    while (emptyCursor < slots.length && slots[emptyCursor] !== null) emptyCursor++;
+    if (emptyCursor < slots.length) {
+      slots[emptyCursor] = staff;
+      emptyCursor++;
+    }
+  }
+
+  return slots;
+}
+
+const CTSO_TEAM_QUOTES = [
+  {
+    quote: 'Kerja tim itu kayak koneksi stabil — nggak selalu kelihatan, tapi pas solid semuanya langsung lancar. Stay solid, CTSO squad!',
+    tag: '#SolidTanpaDrama',
+    mood: 'Team Energy',
+  },
+  {
+    quote: 'Jangan lupa minum air & stretching bentar guys. Server aja butuh cooling, apalagi kamu yang jadi tulang punggung operasional.',
+    tag: '#AntiBurnoutClub',
+    mood: 'Self-Care Check',
+  },
+  {
+    quote: 'Shift pagi, siang, sore, sampai malam — beda jam kerja, satu misi. You guys are literally the main characters keeping everything running!',
+    tag: '#CTSOAlwaysOn',
+    mood: 'Main Character Vibe',
+  },
+  {
+    quote: 'Capek boleh, nyerah jangan. Kalau antrean lagi rame, tarik napas, sruput kopi, gas pelan bareng tim — no one fights alone di sini!',
+    tag: '#GasPelanYangPentingAman',
+    mood: 'Support System',
+  },
+  {
+    quote: 'Bukan soal siapa paling jago sendirian, tapi soal siapa yang selalu siap backup pas temen lagi hectic. Respect buat tim Badung & Denpasar!',
+    tag: '#MutualBackupEnergy',
+    mood: 'Division Pride',
+  },
+  {
+    quote: 'Progress kecil hari ini tetap progress. Nggak harus sempurna tiap detik, yang penting komunikasi jalan, saling jaga vibe, dan tetap happy.',
+    tag: '#GoodVibesOnly',
+    mood: 'Mindset Reset',
+  },
+  {
+    quote: 'Kerja keras itu keren, tapi kerja cerdas bareng tim yang sefrekuensi itu next level. Keep slaying the shift, CTSO fam!',
+    tag: '#NextLevelTeamwork',
+    mood: 'Squad Goals',
+  },
+  {
+    quote: 'Ingat: setiap kendala teknis pasti ada solusinya, dan setiap shift yang padat pasti ada jam pulangnya. Tetap semangat, tetap waras, tetap kompak!',
+    tag: '#ShiftAmanHatiTenang',
+    mood: 'Daily Reminder',
+  },
 ];
 
 const MAIN_POIS: PixelPOI[] = [
@@ -411,7 +524,7 @@ function drawPixelAgent(
 function renderMainOfficePixel(
   ctx: CanvasRenderingContext2D,
   agents: PixelAgent[],
-  roster: OfficeAvatarData[],
+  slots: Array<OfficeAvatarData | null>,
   selectedJobdesk: string | null,
   tvStats: OfficeTVStats,
   time: number
@@ -445,23 +558,106 @@ function renderMainOfficePixel(
     ctx.fillRect(wx + 4, 32, 64, 26);
   }
 
-  // Large Wall TV above PC 2 & PC 3 (showing live CMS Roster & Jobdesk!)
-  px(ctx, 116, 3, 152, 24, '#0f172a');
-  px(ctx, 118, 5, 148, 20, '#18181b');
-  px(ctx, 118, 5, 148, 3, '#FFD416');
-  ctx.fillStyle = '#FFD416';
-  ctx.font = 'bold 6px monospace';
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'top';
-  ctx.fillText(`CTSO LIVE • ${tvStats.totalOnDuty} ON-DUTY`, 122, 10);
-  // Mini pixel bars on TV
-  const bars = tvStats.jobdeskBars.slice(0, 4);
-  bars.forEach((b, idx) => {
-    const bh = 3 + Math.min(7, b.count * 2);
-    px(ctx, 224 + idx * 10, 23 - bh, 7, bh, idx % 2 === 0 ? '#FFD416' : '#38bdf8');
-  });
-  // Green live LED
-  px(ctx, 261, 21, 2, 2, Math.floor(time * 2) % 2 === 0 ? '#22c55e' : '#14532d');
+  // Large Wall TV above PC 2 & PC 3 (Animated NOC / Operational Monitoring Dashboard!)
+  // Subtle ambient screen glow onto wall/floor below
+  const glowAlpha = 0.09 + Math.sin(time * 2.5) * 0.025;
+  ctx.fillStyle = `rgba(56, 189, 248, ${glowAlpha})`;
+  ctx.fillRect(114, 27, 156, 6);
+
+  // TV Bezel & Dark Monitoring Screen
+  px(ctx, 115, 2, 154, 26, '#0b1120');
+  px(ctx, 117, 4, 150, 22, '#060c18');
+
+  // Top Status Bar on TV
+  px(ctx, 117, 4, 150, 4, '#111c33');
+  px(ctx, 117, 4, 3, 4, '#FFD416');
+  // Pulsing LIVE indicator LED
+  const liveOn = Math.floor(time * 3) % 2 === 0;
+  px(ctx, 122, 5, 2, 2, liveOn ? '#22c55e' : '#14532d');
+  // Mini pixel header label bars (simulated NOC header text)
+  px(ctx, 126, 5, 16, 2, '#FFD416');
+  px(ctx, 145, 5, 12, 2, '#94a3b8');
+  px(ctx, 160, 5, 9, 2, '#38bdf8');
+  // Top-right mini alert/link LEDs
+  px(ctx, 250, 5, 2, 2, '#22c55e');
+  px(ctx, 254, 5, 2, 2, '#22c55e');
+  px(ctx, 258, 5, 2, 2, Math.floor(time * 4) % 5 === 0 ? '#facc15' : '#22c55e');
+  px(ctx, 262, 5, 2, 2, liveOn ? '#38bdf8' : '#0284c7');
+
+  // --- Panel 1 (Left): Real-Time Scrolling Network / Traffic Waveform ---
+  const gx = 119;
+  const gy = 10;
+  const gw = 58;
+  const gh = 14;
+  px(ctx, gx, gy, gw, gh, '#0a1426');
+  // Subtle grid lines
+  px(ctx, gx, gy + 4, gw, 1, '#12243f');
+  px(ctx, gx, gy + 9, gw, 1, '#12243f');
+  const waveTick = Math.floor(time * 10);
+  for (let i = 0; i < gw - 2; i += 2) {
+    const sampleIdx = waveTick + i * 0.5;
+    // Primary cyan traffic wave
+    const v1 =
+      Math.sin(sampleIdx * 0.35) * 3.2 +
+      Math.cos(sampleIdx * 0.78) * 1.8 +
+      (Math.sin(sampleIdx * 1.9) > 0.82 ? 2.4 : 0);
+    const h1 = Math.max(2, Math.min(gh - 2, Math.round(6 + v1)));
+    const barColor = h1 >= gh - 3 ? '#FFD416' : '#38bdf8';
+    px(ctx, gx + 1 + i, gy + gh - h1, 2, h1, 'rgba(56, 189, 248, 0.22)');
+    px(ctx, gx + 1 + i, gy + gh - h1, 2, 1, barColor);
+
+    // Secondary green latency/uptime wave
+    const v2 = Math.sin(sampleIdx * 0.25 + 2.1) * 2.2 + Math.cos(sampleIdx * 0.55) * 1.2;
+    const h2 = Math.max(1, Math.min(gh - 4, Math.round(4 + v2)));
+    px(ctx, gx + 1 + i, gy + gh - h2, 2, 1, '#22c55e');
+  }
+  // Bright live cursor pixel on right edge of waveform
+  px(ctx, gx + gw - 2, gy + 5 + Math.round(Math.sin(time * 6) * 3), 2, 2, '#f8fafc');
+
+  // --- Panel 2 (Center): Node / Server Health Matrix + Live Load Bar ---
+  const nx = 180;
+  const ny = 10;
+  px(ctx, nx, ny, 40, 14, '#0a1426');
+  // 4x2 server node status blocks
+  for (let row = 0; row < 2; row++) {
+    for (let col = 0; col < 4; col++) {
+      const nodeId = row * 4 + col;
+      const phase = Math.floor(time * 2.2 + nodeId * 1.7) % 11;
+      let nodeColor = '#22c55e'; // healthy green
+      if (phase === 0) nodeColor = '#facc15'; // brief warning/check
+      else if (phase === 5) nodeColor = '#38bdf8'; // syncing blue
+      px(ctx, nx + 2 + col * 9, ny + 2 + row * 4, 7, 3, nodeColor);
+      px(ctx, nx + 2 + col * 9, ny + 2 + row * 4, 2, 1, 'rgba(255,255,255,0.45)');
+    }
+  }
+  // Animated horizontal CPU / throughput meter below node matrix
+  px(ctx, nx + 2, ny + 11, 36, 2, '#1e293b');
+  const loadW = 14 + Math.round((Math.sin(time * 1.8) * 0.5 + 0.5) * 18);
+  px(ctx, nx + 2, ny + 11, loadW, 2, loadW > 27 ? '#FFD416' : '#38bdf8');
+
+  // --- Panel 3 (Right): Animated Real-Time Telemetry Bar Chart ---
+  const bx = 223;
+  const by = 10;
+  px(ctx, bx, by, 42, 14, '#0a1426');
+  const baseBars = tvStats.jobdeskBars.slice(0, 6);
+  for (let idx = 0; idx < 6; idx++) {
+    const baseCount = baseBars[idx]?.count ?? ((idx % 3) + 1);
+    const wave = Math.sin(time * 3.2 + idx * 1.15) * 2.5 + Math.cos(time * 1.7 + idx) * 1.2;
+    const bh = Math.max(2, Math.min(11, Math.round(3 + baseCount * 1.6 + wave)));
+    const barX = bx + 2 + idx * 6 + (idx > 2 ? 1 : 0);
+    const col = idx % 3 === 0 ? '#FFD416' : idx % 3 === 1 ? '#38bdf8' : '#22c55e';
+    px(ctx, barX, by + 13 - bh, 4, bh, col);
+    // Peak cap pixel
+    px(ctx, barX, by + 12 - bh, 4, 1, '#f8fafc');
+  }
+
+  // Subtle CRT/LCD horizontal scanline sweep
+  const scanY = 4 + (Math.floor(time * 8) % 22);
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+  ctx.fillRect(117, scanY, 150, 1);
+
+  // TV Power LED on bottom bezel
+  px(ctx, 263, 27, 2, 1, liveOn ? '#22c55e' : '#15803d');
 
   // --- Right Wall (Frosted/Glass Windows) ---
   px(ctx, MAIN_W - 14, 0, 14, MAIN_H, '#d8d0c0');
@@ -470,8 +666,15 @@ function renderMainOfficePixel(
     px(ctx, MAIN_W - 10, wy + 2, 6, 36, '#bae6fd');
   }
 
-  // --- Left border trim (open cutaway) ---
-  px(ctx, 0, 0, 12, MAIN_H, '#c5bca9');
+  // --- Left border trim with Exit Doorway (to Toilet / Hallway) ---
+  px(ctx, 0, 0, 12, 130, '#c5bca9');
+  px(ctx, 0, 158, 12, MAIN_H - 158, '#c5bca9');
+  // Doorway jambs & welcome mat
+  px(ctx, 0, 128, 12, 3, '#78716c');
+  px(ctx, 0, 157, 12, 3, '#78716c');
+  px(ctx, 0, 131, 12, 26, '#e2dac6');
+  px(ctx, 2, 135, 8, 18, '#94a3b8');
+  px(ctx, 3, 137, 6, 14, '#cbd5e1');
 
   // --- Bottom Wall (Plain wall with Animated AC Unit!) ---
   px(ctx, 0, MAIN_H - 14, MAIN_W, 14, '#c5bca9');
@@ -522,21 +725,17 @@ function renderMainOfficePixel(
   px(ctx, 276, 115, 13, 13, '#1d4ed8'); // backpack
   px(ctx, 298, 116, 14, 11, '#1e293b'); // dark work bag
 
-  // --- Draw All Desks (including standby PC 11 at x=64, y=230) & Chairs ---
-  const standbyDesk11: PixelDesk = { id: 11, x: 64, y: 230, sitX: 64, sitY: 214, aisleX: 64, aisleY: 184, facing: 'down' };
-  drawChair(ctx, standbyDesk11.sitX, standbyDesk11.sitY, standbyDesk11.facing);
-  drawMainDesk(ctx, standbyDesk11, false, time);
-
+  // --- Draw All 11 Desks & Chairs (PIC mapped) ---
   MAIN_DESKS.forEach((desk, idx) => {
     drawChair(ctx, desk.sitX, desk.sitY, desk.facing);
-    const active = idx < roster.length && agents[idx].state === 'WORKING';
+    const active = Boolean(slots[idx]) && agents[idx].state === 'WORKING';
     drawMainDesk(ctx, desk, active, time);
   });
 
   // --- Draw Active Agents sorted by Y (proper 2D top-down depth!) ---
   const visibleAgents = agents
-    .map((agent, idx) => ({ agent, meta: roster[idx] }))
-    .filter((item) => Boolean(item.meta))
+    .map((agent, idx) => ({ agent, meta: slots[idx] ?? undefined }))
+    .filter((item) => Boolean(item.meta) && item.agent.x > -10 && item.agent.x < MAIN_W + 10)
     .sort((a, b) => a.agent.y - b.agent.y);
 
   for (const { agent, meta } of visibleAgents) {
@@ -676,12 +875,13 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
   const mainStatusRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const studioStatusRefs = useRef<Array<HTMLSpanElement | null>>([]);
 
-  const mainRosterRef = useRef(mainRoster);
+  const mainSlots = useMemo(() => assignMainDeskSlots(mainRoster), [mainRoster]);
+  const mainSlotsRef = useRef(mainSlots);
   const studioRosterRef = useRef(studioRoster);
   const selectedJobdeskRef = useRef(selectedJobdesk);
   const tvStatsRef = useRef(tvStats);
 
-  mainRosterRef.current = mainRoster;
+  mainSlotsRef.current = mainSlots;
   studioRosterRef.current = studioRoster;
   selectedJobdeskRef.current = selectedJobdesk;
   tvStatsRef.current = tvStats;
@@ -690,6 +890,14 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
   const [inspectedStudio, setInspectedStudio] = useState<(OfficeAvatarData & { status: string }) | null>(null);
   const [mainZoom, setMainZoom] = useState(1);
   const [studioZoom, setStudioZoom] = useState(1);
+  const [quoteIdx, setQuoteIdx] = useState(() => Math.floor(Math.random() * CTSO_TEAM_QUOTES.length));
+
+  useEffect(() => {
+    const t = window.setTimeout(() => {
+      setQuoteIdx((prev) => (prev + 1) % CTSO_TEAM_QUOTES.length);
+    }, 10000);
+    return () => window.clearTimeout(t);
+  }, [quoteIdx]);
 
   useEffect(() => {
     if (resetCounter > 0) {
@@ -723,15 +931,16 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
 
     // Kick off initial activity right away
     const kickTimer = window.setTimeout(() => {
-      if (mainRosterRef.current.length > 2) {
-        const a = mainAgents[2];
+      const firstActiveMainIdx = mainSlotsRef.current.findIndex((s) => Boolean(s));
+      if (firstActiveMainIdx >= 0) {
+        const a = mainAgents[firstActiveMainIdx];
         a.currentPOI = MAIN_POIS[0];
         a.waypoints = buildPixelPath('main', { x: a.x, y: a.y }, MAIN_POIS[0], a.desk.aisleY, 94);
         a.wpIndex = 0;
         a.state = 'WALKING_TO_POI';
       }
-      if (studioRosterRef.current.length > 1) {
-        const s = studioAgents[1];
+      if (studioRosterRef.current.length > 0) {
+        const s = studioAgents[0];
         s.currentPOI = STUDIO_POIS[0];
         s.waypoints = buildPixelPath('studio', { x: s.x, y: s.y }, STUDIO_POIS[0], s.desk.aisleY, 86);
         s.wpIndex = 0;
@@ -742,7 +951,10 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
     const getStatusLabel = (a: PixelAgent) => {
       if (a.state === 'WORKING') return a.workSub === 'sip' ? 'Minum Kopi/Air' : 'Bekerja';
       if (a.state === 'AT_POI') return a.currentPOI?.label || 'Istirahat';
-      if (a.state === 'WALKING_BACK') return a.hasDrink ? 'Bawa Minuman ke Meja' : 'Kembali ke Meja';
+      if (a.state === 'WALKING_BACK') {
+        if (a.currentPOI?.id === 'toilet') return 'Kembali dari Toilet';
+        return a.hasDrink ? 'Bawa Minuman ke Meja' : 'Kembali ke Meja';
+      }
       return a.currentPOI ? `Menuju ${a.currentPOI.label}` : 'Berjalan';
     };
 
@@ -752,7 +964,7 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
       logicalW: number,
       logicalH: number,
       agents: PixelAgent[],
-      roster: OfficeAvatarData[],
+      slots: Array<OfficeAvatarData | null | undefined>,
       setter: React.Dispatch<React.SetStateAction<(OfficeAvatarData & { status: string }) | null>>
     ) => {
       const rect = canvas.getBoundingClientRect();
@@ -762,7 +974,7 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
       let closestIdx = -1;
       let bestDist = 20;
       agents.forEach((a, idx) => {
-        if (idx >= roster.length) return;
+        if (!slots[idx]) return;
         const d = Math.hypot(a.x - lx, (a.y - 6) - ly);
         if (d < bestDist) {
           bestDist = d;
@@ -770,15 +982,16 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
         }
       });
 
-      if (closestIdx >= 0) {
-        setter({ ...roster[closestIdx], status: getStatusLabel(agents[closestIdx]) });
+      const found = closestIdx >= 0 ? slots[closestIdx] : null;
+      if (found) {
+        setter({ ...found, status: getStatusLabel(agents[closestIdx]) });
       } else {
         setter(null);
       }
     };
 
     const onMainClick = (e: MouseEvent) =>
-      handleCanvasClick(e, mainCanvas, MAIN_W, MAIN_H, mainAgents, mainRosterRef.current, setInspectedMain);
+      handleCanvasClick(e, mainCanvas, MAIN_W, MAIN_H, mainAgents, mainSlotsRef.current, setInspectedMain);
     const onStudioClick = (e: MouseEvent) =>
       handleCanvasClick(e, studioCanvas, STUDIO_W, STUDIO_H, studioAgents, studioRosterRef.current, setInspectedStudio);
 
@@ -881,14 +1094,32 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
           a.drinkTimer = 24;
         }
         if (a.stateTimer >= a.breakDuration) {
-          const fromAisle = a.room === 'studio' ? 86 : (a.y < 140 ? 94 : 184);
-          a.waypoints = buildPixelPath(
-            a.room,
-            { x: a.x, y: a.y },
-            { x: a.desk.sitX, y: a.desk.sitY },
-            fromAisle,
-            a.desk.aisleY
-          );
+          if (a.currentPOI?.id === 'toilet') {
+            if (a.room === 'main') {
+              a.waypoints = [
+                { x: 44, y: 144 },
+                { x: 44, y: a.desk.aisleY },
+                { x: a.desk.aisleX, y: a.desk.aisleY },
+                { x: a.desk.sitX, y: a.desk.sitY },
+              ];
+            } else {
+              a.waypoints = [
+                { x: 160, y: 196 },
+                { x: a.desk.aisleX, y: 196 },
+                { x: a.desk.aisleX, y: a.desk.aisleY },
+                { x: a.desk.sitX, y: a.desk.sitY },
+              ];
+            }
+          } else {
+            const fromAisle = a.room === 'studio' ? 86 : (a.y < 140 ? 94 : 184);
+            a.waypoints = buildPixelPath(
+              a.room,
+              { x: a.x, y: a.y },
+              { x: a.desk.sitX, y: a.desk.sitY },
+              fromAisle,
+              a.desk.aisleY
+            );
+          }
           a.wpIndex = 0;
           a.state = 'WALKING_BACK';
           a.stateTimer = 0;
@@ -896,9 +1127,41 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
       }
     };
 
+    const sendToToilet = (activeList: PixelAgent[], room: 'main' | 'studio') => {
+      const workingPool = activeList.filter((a) => a.state === 'WORKING');
+      if (workingPool.length === 0) return false;
+      const chosen = workingPool[Math.floor(Math.random() * workingPool.length)];
+      chosen.hasDrink = null;
+      chosen.stateTimer = 0;
+      chosen.breakDuration = 6; // stays outside in toilet for 6 seconds
+      if (room === 'main') {
+        chosen.currentPOI = MAIN_TOILET_POI;
+        chosen.waypoints = [
+          { x: chosen.desk.aisleX, y: chosen.desk.aisleY },
+          { x: 44, y: chosen.desk.aisleY },
+          { x: 44, y: 144 },
+          { x: MAIN_TOILET_POI.x, y: MAIN_TOILET_POI.y },
+        ];
+      } else {
+        chosen.currentPOI = STUDIO_TOILET_POI;
+        chosen.waypoints = [
+          { x: chosen.desk.aisleX, y: chosen.desk.aisleY },
+          { x: chosen.desk.aisleX, y: 196 },
+          { x: 160, y: 196 },
+          { x: STUDIO_TOILET_POI.x, y: STUDIO_TOILET_POI.y },
+        ];
+      }
+      chosen.wpIndex = 0;
+      chosen.state = 'WALKING_TO_POI';
+      return true;
+    };
+
     let rafId = 0;
     let lastTs = performance.now();
     let elapsed = 0;
+    // 1x per 60 seconds toilet trip per room (first trip after 18s so visible quickly, then every 60s)
+    let mainToiletTimer = 18;
+    let studioToiletTimer = 32;
 
     const loop = (now: number) => {
       rafId = window.requestAnimationFrame(loop);
@@ -906,8 +1169,26 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
       lastTs = now;
       elapsed += dt;
 
-      const activeMain = mainAgents.slice(0, mainRosterRef.current.length);
+      const activeMain = mainAgents.filter((_, idx) => Boolean(mainSlotsRef.current[idx]));
       const activeStudio = studioAgents.slice(0, studioRosterRef.current.length);
+
+      // Scheduled 1x/minute toilet break (avatar exits room and returns)
+      mainToiletTimer -= dt;
+      if (mainToiletTimer <= 0) {
+        if (sendToToilet(activeMain, 'main')) {
+          mainToiletTimer = 60;
+        } else {
+          mainToiletTimer = 5;
+        }
+      }
+      studioToiletTimer -= dt;
+      if (studioToiletTimer <= 0) {
+        if (sendToToilet(activeStudio, 'studio')) {
+          studioToiletTimer = 60;
+        } else {
+          studioToiletTimer = 5;
+        }
+      }
 
       for (const a of activeMain) updateAgent(a, dt, activeMain, 3);
       for (const a of activeStudio) updateAgent(a, dt, activeStudio, 1);
@@ -915,7 +1196,7 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
       renderMainOfficePixel(
         mainCtx,
         mainAgents,
-        mainRosterRef.current,
+        mainSlotsRef.current,
         selectedJobdeskRef.current,
         tvStatsRef.current,
         elapsed
@@ -931,7 +1212,7 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
       // Update crisp Retina HD overlay positions & live status text at 60fps (zero React re-renders!)
       const syncHdLabels = (
         agentsList: PixelAgent[],
-        rosterList: OfficeAvatarData[],
+        rosterList: Array<OfficeAvatarData | null | undefined>,
         labelNodes: Array<HTMLDivElement | null>,
         statusNodes: Array<HTMLSpanElement | null>,
         w: number,
@@ -946,6 +1227,11 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
             continue;
           }
           const a = agentsList[i];
+          // Hide pill cleanly when avatar has stepped outside the room (toilet break)
+          if (a.x < 4 || a.x > w - 4 || a.y < 4 || a.y > h - 4) {
+            el.style.opacity = '0';
+            continue;
+          }
           const leftPct = (a.x / w) * 100;
           const topPct = (a.y / h) * 100;
           el.style.opacity = '1';
@@ -955,7 +1241,9 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
           const statusEl = statusNodes[i];
           if (statusEl) {
             let statusIcon = '💻';
-            if (a.state === 'AT_POI' && a.currentPOI) {
+            if (a.currentPOI?.id === 'toilet' && a.state !== 'WORKING') {
+              statusIcon = '🚻';
+            } else if (a.state === 'AT_POI' && a.currentPOI) {
               statusIcon = a.currentPOI.icon;
             } else if (a.state === 'WALKING_TO_POI') {
               statusIcon = '🚶';
@@ -971,7 +1259,7 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
         }
       };
 
-      syncHdLabels(mainAgents, mainRosterRef.current, mainLabelRefs.current, mainStatusRefs.current, MAIN_W, MAIN_H);
+      syncHdLabels(mainAgents, mainSlotsRef.current, mainLabelRefs.current, mainStatusRefs.current, MAIN_W, MAIN_H);
       syncHdLabels(studioAgents, studioRosterRef.current, studioLabelRefs.current, studioStatusRefs.current, STUDIO_W, STUDIO_H);
     };
 
@@ -987,10 +1275,10 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 w-full">
-      {/* Stage 1: Kantor Utama (Badung) — 2D Pixel Art + Today's Shift Roster */}
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+      {/* Stage 1: Kantor Utama (Badung) — 2D Pixel Art */}
       <div className="flex flex-col gap-2.5">
-        <article className="relative h-[400px] sm:h-[450px] xl:h-[490px] rounded-2xl overflow-hidden bg-[#c5bca9] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
+        <article className="relative h-[440px] sm:h-[500px] xl:h-[540px] rounded-2xl overflow-hidden bg-[#c5bca9] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
           <div
             style={{
               transform: `scale(${mainZoom})`,
@@ -1009,8 +1297,9 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
             />
             {/* Crisp Retina HD Pill (Icon on Left + Name) centered on Avatar */}
             <div className="pointer-events-none absolute inset-0 overflow-hidden">
-              {mainRoster.map((staff, idx) => {
-                const firstName = staff.name.trim().split(/\s+/)[0];
+              {mainSlots.map((staff, idx) => {
+                if (!staff) return null;
+                const displayName = (staff.nickname || staff.name).trim().split(/\s+/)[0];
                 return (
                   <div
                     key={staff.id}
@@ -1019,12 +1308,17 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
                     className="absolute inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] leading-none font-extrabold whitespace-nowrap shadow-md border bg-[#18181b]/90 text-white border-white/25"
                   >
                     <span
+                      className="w-2 h-2 rounded-full shrink-0 ring-1 ring-white/50"
+                      style={{ backgroundColor: staff.shiftColor || '#FFD416' }}
+                      title={`Shift: ${staff.shiftCode}`}
+                    />
+                    <span
                       ref={(el) => { mainStatusRefs.current[idx] = el; }}
                       className="text-[10.5px] leading-none"
                     >
                       💻
                     </span>
-                    <span>{firstName}</span>
+                    <span>{displayName}</span>
                   </div>
                 );
               })}
@@ -1043,7 +1337,10 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
           {inspectedMain && (
             <div className="absolute bottom-3 left-3.5 right-3.5 z-10 flex items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-white/95 text-[#202020] border border-slate-200 shadow-clean-lg text-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#FFD416] shrink-0" />
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: inspectedMain.shiftColor || '#FFD416' }}
+                />
                 <strong className="truncate">{inspectedMain.name}</strong>
                 <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10.5px]">
                   {inspectedMain.shiftCode}
@@ -1056,41 +1353,11 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
             </div>
           )}
         </article>
-
-        {/* Live Shifting Staff Names Bar — Badung */}
-        <div className="bg-white dark:bg-[#202020] rounded-xl border border-slate-200 dark:border-neutral-800 px-3.5 py-2.5 shadow-clean">
-          <div className="text-[11px] font-bold text-[#647084] dark:text-neutral-400 mb-1.5">
-            Staff Shift Hari Ini — Badung ({mainRoster.length})
-          </div>
-          <div className="flex flex-wrap gap-1.5">
-            {mainRoster.map((staff) => {
-              const isSelected = inspectedMain?.id === staff.id;
-              return (
-                <button
-                  key={staff.id}
-                  type="button"
-                  onClick={() => setInspectedMain({ ...staff, status: 'On-Duty' })}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#FFD416] text-[#202020] border-[#E5BD00]'
-                      : 'bg-[#F4F4F4] dark:bg-neutral-800 text-[#202020] dark:text-neutral-200 border-slate-200/80 dark:border-neutral-700 hover:border-[#FFD416]'
-                  }`}
-                >
-                  <span className="font-bold">{staff.name}</span>
-                  <span className="opacity-70">• {staff.shiftCode}</span>
-                  <span className="px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10 font-bold text-[10px]">
-                    {staff.jobdeskCode}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
       </div>
 
-      {/* Stage 2: Ruang Kayu (Denpasar) — 2D Pixel Art + Today's Shift Roster */}
+      {/* Stage 2: Ruang Kayu (Denpasar) — 2D Pixel Art */}
       <div className="flex flex-col gap-2.5">
-        <article className="relative h-[400px] sm:h-[450px] xl:h-[490px] rounded-2xl overflow-hidden bg-[#3b2415] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
+        <article className="relative h-[440px] sm:h-[500px] xl:h-[540px] rounded-2xl overflow-hidden bg-[#3b2415] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
           <div
             style={{
               transform: `scale(${studioZoom})`,
@@ -1119,6 +1386,11 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
                     className="absolute inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] leading-none font-extrabold whitespace-nowrap shadow-md border bg-[#18181b]/90 text-white border-white/25"
                   >
                     <span
+                      className="w-2 h-2 rounded-full shrink-0 ring-1 ring-white/50"
+                      style={{ backgroundColor: staff.shiftColor || '#FFD416' }}
+                      title={`Shift: ${staff.shiftCode}`}
+                    />
+                    <span
                       ref={(el) => { studioStatusRefs.current[idx] = el; }}
                       className="text-[11px] leading-none"
                     >
@@ -1143,7 +1415,10 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
           {inspectedStudio && (
             <div className="absolute bottom-3 left-3.5 right-3.5 z-10 flex items-center justify-between gap-2 px-3.5 py-2 rounded-xl bg-white/95 text-[#202020] border border-slate-200 shadow-clean-lg text-xs">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2.5 h-2.5 rounded-full bg-[#FFD416] shrink-0" />
+                <span
+                  className="w-2.5 h-2.5 rounded-full shrink-0"
+                  style={{ backgroundColor: inspectedStudio.shiftColor || '#FFD416' }}
+                />
                 <strong className="truncate">{inspectedStudio.name}</strong>
                 <span className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10.5px]">
                   {inspectedStudio.shiftCode}
@@ -1156,34 +1431,53 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
             </div>
           )}
         </article>
+      </div>
 
-        {/* Live Shifting Staff Names Bar — Denpasar */}
-        <div className="bg-white dark:bg-[#202020] rounded-xl border border-slate-200 dark:border-neutral-800 px-3.5 py-2.5 shadow-clean">
-          <div className="text-[11px] font-bold text-[#647084] dark:text-neutral-400 mb-1.5">
-            Staff Shift Hari Ini — Denpasar ({studioRoster.length})
+      {/* Gen-Z Relatable CTSO Team & Division Motivation Strip (Seamless, fixed 2-line height) */}
+      <div className="lg:col-span-2 w-full border-t border-slate-200/80 dark:border-neutral-800/90 mt-2 pt-6 pb-2 px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
+          <div className="flex-1 min-w-0 space-y-2">
+            <div className="flex flex-wrap items-center gap-2.5">
+              <span className="text-base sm:text-[17px] font-black tracking-tight text-[#202020] dark:text-[#FFD416]">
+                CTSO Daily Vibes
+              </span>
+              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFD416]/15 text-[#5E4C00] dark:text-[#FFD416]">
+                {CTSO_TEAM_QUOTES[quoteIdx].mood}
+              </span>
+              <span className="text-xs font-semibold text-slate-400 dark:text-neutral-500">
+                {CTSO_TEAM_QUOTES[quoteIdx].tag}
+              </span>
+            </div>
+            <p className="text-[15px] sm:text-base font-medium text-slate-500 dark:text-neutral-400 leading-relaxed min-h-[3.1rem] line-clamp-2 pt-0.5">
+              “{CTSO_TEAM_QUOTES[quoteIdx].quote}”
+            </p>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {studioRoster.map((staff) => {
-              const isSelected = inspectedStudio?.id === staff.id;
-              return (
+
+          <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+            <div className="flex items-center gap-1.5">
+              {CTSO_TEAM_QUOTES.map((_, idx) => (
                 <button
-                  key={staff.id}
+                  key={idx}
                   type="button"
-                  onClick={() => setInspectedStudio({ ...staff, status: 'On-Duty' })}
-                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-semibold border transition-colors cursor-pointer ${
-                    isSelected
-                      ? 'bg-[#FFD416] text-[#202020] border-[#E5BD00]'
-                      : 'bg-[#F4F4F4] dark:bg-neutral-800 text-[#202020] dark:text-neutral-200 border-slate-200/80 dark:border-neutral-700 hover:border-[#FFD416]'
+                  aria-label={`Motivasi ${idx + 1}`}
+                  onClick={() => setQuoteIdx(idx)}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    idx === quoteIdx
+                      ? 'w-5 bg-[#FFD416]'
+                      : 'w-1.5 bg-slate-300 dark:bg-neutral-700 hover:bg-slate-400'
                   }`}
-                >
-                  <span className="font-bold">{staff.name}</span>
-                  <span className="opacity-70">• {staff.shiftCode}</span>
-                  <span className="px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10 font-bold text-[10px]">
-                    {staff.jobdeskCode}
-                  </span>
-                </button>
-              );
-            })}
+                />
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => setQuoteIdx((prev) => (prev + 1) % CTSO_TEAM_QUOTES.length)}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-slate-200/60 dark:hover:bg-neutral-800 text-[11px] font-bold text-[#647084] dark:text-neutral-400 hover:text-[#202020] dark:hover:text-white transition-colors cursor-pointer"
+              title="Ganti quotes motivasi"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Next</span>
+            </button>
           </div>
         </div>
       </div>

@@ -24,6 +24,7 @@ class EmployeeModel(Base):
     id = Column(String, primary_key=True, default=gen_uuid)
     employee_no = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
+    nickname = Column(String, nullable=True)
     role = Column(String, nullable=False, default="Employee")
     level = Column(String, nullable=True, default="Junior")
     status = Column(String, default="active")  # active, inactive

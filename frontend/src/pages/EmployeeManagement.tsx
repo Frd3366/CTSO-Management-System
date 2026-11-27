@@ -53,6 +53,7 @@ export const EmployeeManagement: React.FC = () => {
   // Form Fields (PRD 7.1)
   const [formEmployeeNo, setFormEmployeeNo] = useState('');
   const [formName, setFormName] = useState('');
+  const [formNickname, setFormNickname] = useState('');
   const [formLevel, setFormLevel] = useState<string>('Junior');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
@@ -70,6 +71,7 @@ export const EmployeeManagement: React.FC = () => {
     return employees.filter((e) => {
       const matchSearch =
         (e.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (e.nickname || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.email || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.employeeNo || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.level || '').toLowerCase().includes(searchTerm.toLowerCase());
@@ -86,6 +88,7 @@ export const EmployeeManagement: React.FC = () => {
     setEditingId(null);
     setFormEmployeeNo(`CTSO-${String(employees.length + 101).padStart(4, '0')}`);
     setFormName('');
+    setFormNickname('');
     setFormLevel('Junior');
     setFormEmail('');
     setFormPhone('');
@@ -105,6 +108,7 @@ export const EmployeeManagement: React.FC = () => {
     setEditingId(emp.id);
     setFormEmployeeNo(emp.employeeNo);
     setFormName(emp.name);
+    setFormNickname(emp.nickname || '');
     const validLevel = EMPLOYEE_LEVEL_OPTIONS.includes(emp.level as any) ? emp.level : 'Junior';
     setFormLevel(validLevel);
     setFormEmail(emp.email);
@@ -205,18 +209,16 @@ export const EmployeeManagement: React.FC = () => {
       return;
     }
 
-    const team = teams.find((t) => t.id === formTeamId);
-    const teamName = team?.name || 'CTSO Operations';
+    const cleanNickname = formNickname.trim();
 
     if (editingId) {
       updateEmployee(editingId, {
         employeeNo: cleanEmpNo,
         name: cleanName,
+        nickname: cleanNickname,
         level: formLevel,
         email: cleanEmail,
         phone: formPhone,
-        teamId: formTeamId,
-        teamName,
         defaultLocation: formLocation,
         role: formRole,
         status: formStatus,
@@ -246,11 +248,10 @@ export const EmployeeManagement: React.FC = () => {
         id: newEmpId,
         employeeNo: cleanEmpNo,
         name: cleanName,
+        nickname: cleanNickname,
         level: formLevel,
         email: cleanEmail,
         phone: formPhone,
-        teamId: formTeamId,
-        teamName,
         defaultLocation: formLocation,
         status: formStatus,
         role: formRole,
@@ -268,8 +269,7 @@ export const EmployeeManagement: React.FC = () => {
           role: formRole,
           status: formStatus,
           password: 'admin',
-          phone: formPhone,
-          department: teamName
+          phone: formPhone
         });
       }
 
@@ -280,10 +280,11 @@ export const EmployeeManagement: React.FC = () => {
 
   // Export Employee List to CSV (PRD 12.3)
   const handleExport = () => {
-    const headers = ['Employee ID', 'Nama Lengkap', 'Jabatan', 'Email', 'Telepon', 'Status', 'Tanggal Bergabung'];
+    const headers = ['Employee ID', 'Nama Lengkap', 'Nama Panggilan', 'Jabatan', 'Email', 'Telepon', 'Status', 'Tanggal Bergabung'];
     const rows = filteredEmployees.map((e) => [
       e.employeeNo,
       `"${e.name}"`,
+      `"${e.nickname || ''}"`,
       `"${e.level}"`,
       e.email,
       e.phone,
@@ -395,6 +396,7 @@ export const EmployeeManagement: React.FC = () => {
               <tr>
                 <th className="py-3 px-4">Employee ID</th>
                 <th className="py-3 px-4">Nama Lengkap</th>
+                <th className="py-3 px-4">Nama Panggilan</th>
                 <th className="py-3 px-4">Level</th>
                 <th className="py-3 px-4">Role Akun</th>
                 <th className="py-3 px-4">Kontak</th>
@@ -405,7 +407,7 @@ export const EmployeeManagement: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 7 : 6} className="py-8 text-center text-slate-400 dark:text-gray-500">
+                  <td colSpan={isAdmin ? 8 : 7} className="py-8 text-center text-slate-400 dark:text-gray-500">
                     Tidak ada karyawan yang sesuai filter.
                   </td>
                 </tr>
@@ -417,6 +419,9 @@ export const EmployeeManagement: React.FC = () => {
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-bold text-slate-900 dark:text-white">{emp.name}</div>
+                    </td>
+                    <td className="py-3 px-4 text-slate-700 dark:text-gray-300 font-medium">
+                      {emp.nickname?.trim() || <span className="text-slate-400 dark:text-gray-600">-</span>}
                     </td>
                     <td className="py-3 px-4 text-slate-700 dark:text-gray-300 font-medium">
                       {emp.level || 'Junior'}
@@ -526,20 +531,32 @@ export const EmployeeManagement: React.FC = () => {
             </div>
           </div>
 
-          <div>
-            <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Level</label>
-            <select
-              value={formLevel}
-              onChange={(e) => setFormLevel(e.target.value)}
-              className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181A] text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-[#F9C900]"
-              required
-            >
-              {EMPLOYEE_LEVEL_OPTIONS.map((lvl) => (
-                <option key={lvl} value={lvl}>
-                  {lvl}
-                </option>
-              ))}
-            </select>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Nama Panggilan</label>
+              <input
+                type="text"
+                value={formNickname}
+                onChange={(e) => setFormNickname(e.target.value)}
+                placeholder="cth: Putu"
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#F9C900]"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Level</label>
+              <select
+                value={formLevel}
+                onChange={(e) => setFormLevel(e.target.value)}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181A] text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-[#F9C900]"
+                required
+              >
+                {EMPLOYEE_LEVEL_OPTIONS.map((lvl) => (
+                  <option key={lvl} value={lvl}>
+                    {lvl}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">

@@ -15,6 +15,7 @@ try:
         conn.execute(text("ALTER TABLE schedules ADD COLUMN IF NOT EXISTS agent VARCHAR;"))
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;"))
         conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS level VARCHAR DEFAULT 'Junior';"))
+        conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS nickname VARCHAR;"))
         conn.commit()
 except Exception:
     pass

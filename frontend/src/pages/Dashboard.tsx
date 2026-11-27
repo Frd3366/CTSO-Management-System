@@ -666,7 +666,7 @@ export const Dashboard: React.FC = () => {
                 <thead className="bg-[#F8FAFC] dark:bg-white/5 text-slate-600 dark:text-gray-300 font-bold border-b border-slate-200/80 dark:border-white/10">
                   <tr>
                     <th className="py-3 px-4">Karyawan / ID</th>
-                    <th className="py-3 px-4">Posisi & Tim</th>
+                    <th className="py-3 px-4">Posisi</th>
                     <th className="py-3 px-4">Shift</th>
                     <th className="py-3 px-4">Jobdesk</th>
                     <th className="py-3 px-4">Hub Lokasi</th>
@@ -699,9 +699,6 @@ export const Dashboard: React.FC = () => {
                           <td className="py-3 px-4">
                             <div className="text-[11px] font-semibold text-slate-700 dark:text-gray-200">
                               {emp?.role || emp?.level || 'CTSO Staff'}
-                            </div>
-                            <div className="text-[10px] text-slate-500 dark:text-gray-400">
-                              {emp?.teamName || 'Operations'}
                             </div>
                           </td>
                           <td className="py-3 px-4 whitespace-nowrap">

@@ -96,11 +96,12 @@ export interface EmployeeItem {
   employeeNo: string; // e.g. CTSO-101
   employeeId?: string;
   name: string;
+  nickname?: string;
   level: string; // e.g. Lead Operations, Senior Specialist, Technician, NOC Engineer
   email: string;
   phone: string;
-  teamId: string;
-  teamName: string;
+  teamId?: string;
+  teamName?: string;
   defaultLocation: WorkLocation;
   defaultJobdesk?: string;
   status: 'active' | 'inactive';

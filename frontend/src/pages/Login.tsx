@@ -119,15 +119,6 @@ export const Login: React.FC = () => {
       {/* Soft backdrop overlay */}
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-[2px]" />
 
-      {/* Back to Live Animation Workspace button */}
-      <Link
-        to="/"
-        className="fixed top-4 left-4 z-20 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-900 text-xs font-bold shadow-lg border border-white/60 backdrop-blur-md transition-colors"
-      >
-        <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
-        <span>Kembali</span>
-      </Link>
-
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
         {/* Brand Header */}
         <div className="w-full text-center mb-6 space-y-2.5">
@@ -444,6 +435,15 @@ export const Login: React.FC = () => {
             </form>
           )}
         </div>
+
+        {/* Back to Live Workspace button below Login Form */}
+        <Link
+          to="/"
+          className="mt-4 inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-900 text-xs font-bold shadow-lg border border-white/60 backdrop-blur-md transition-colors"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" aria-hidden="true" />
+          <span>Kembali ke Live Workspace</span>
+        </Link>
       </div>
     </div>
   );
