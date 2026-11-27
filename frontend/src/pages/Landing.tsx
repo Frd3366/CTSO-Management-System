@@ -257,32 +257,32 @@ export const Landing: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#F4F4F4] dark:bg-[#141414] text-[#202020] dark:text-[#F4F4F4] font-sans antialiased selection:bg-[#FFD416]/40">
-      {/* Top CMS Navbar (Logo + Live Date & Clock only) */}
+      {/* Top CMS Navbar (Logo + Live Date & Clock + Theme Toggle) */}
       <header className="sticky top-0 z-30 bg-white/95 dark:bg-[#202020]/95 backdrop-blur-md border-b border-slate-200 dark:border-neutral-800 shadow-topbar">
-        <div className="max-w-[1520px] mx-auto px-6 sm:px-9 h-[70px] flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3.5">
+        <div className="max-w-[1520px] mx-auto px-3.5 sm:px-9 h-14 sm:h-[70px] flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center gap-2.5 sm:gap-3.5 min-w-0">
             <img
               src={cmsLogo}
               alt="CTSO Logo"
-              className="w-10 h-10 rounded-xl object-cover border border-slate-200 dark:border-neutral-700 shadow-clean"
+              className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg sm:rounded-xl object-cover border border-slate-200 dark:border-neutral-700 shadow-clean shrink-0"
             />
-            <div>
-              <span className="block text-base sm:text-[17px] font-extrabold tracking-tight text-[#202020] dark:text-white leading-none">
+            <div className="min-w-0">
+              <span className="block text-xs sm:text-[17px] font-extrabold tracking-tight text-[#202020] dark:text-white leading-tight truncate">
                 CTSO MANAGEMENT SYSTEM
               </span>
-              <span className="block text-xs font-medium text-[#647084] dark:text-neutral-400 mt-0.5">
+              <span className="block text-[10px] sm:text-xs font-medium text-[#647084] dark:text-neutral-400 truncate">
                 Live Operational Workspace
               </span>
             </div>
           </div>
 
           {/* Live Hari, Tanggal & Jam WITA + Global Dark/Light Mode Toggle */}
-          <div className="flex items-center gap-2.5">
-            <div className="flex items-center gap-2.5 px-3.5 py-2 rounded-xl bg-[#F4F4F4] dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-[13px] font-semibold text-[#202020] dark:text-neutral-200">
-              <Calendar className="w-4 h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+            <div className="flex items-center gap-1.5 sm:gap-2.5 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg sm:rounded-xl bg-[#F4F4F4] dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-[11px] sm:text-[13px] font-semibold text-[#202020] dark:text-neutral-200">
+              <Calendar className="hidden sm:block w-4 h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
               <span className="hidden sm:inline">{wita.dateLabel}</span>
               <span className="hidden sm:inline text-slate-300 dark:text-neutral-600">•</span>
-              <Clock className="w-4 h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
+              <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#BF9C00] shrink-0" aria-hidden="true" />
               <span className="font-mono font-bold tabular-nums">{wita.timeLabel}</span>
             </div>
 
@@ -291,37 +291,37 @@ export const Landing: React.FC = () => {
               onClick={toggleTheme}
               aria-label={theme === 'dark' ? 'Beralih ke mode terang' : 'Beralih ke mode gelap'}
               title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              className="p-2.5 rounded-xl bg-[#F4F4F4] dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-200 hover:text-[#111111] dark:hover:text-white hover:border-[#FFD416] transition-colors cursor-pointer"
+              className="p-2 sm:p-2.5 rounded-lg sm:rounded-xl bg-[#F4F4F4] dark:bg-neutral-800 border border-slate-200 dark:border-neutral-700 text-slate-600 dark:text-neutral-200 hover:text-[#111111] dark:hover:text-white hover:border-[#FFD416] transition-colors cursor-pointer"
             >
               {theme === 'dark' ? (
-                <Sun className="w-4 h-4 text-[#FFD416]" aria-hidden="true" />
+                <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#FFD416]" aria-hidden="true" />
               ) : (
-                <Moon className="w-4 h-4" aria-hidden="true" />
+                <Moon className="w-3.5 h-3.5 sm:w-4 sm:h-4" aria-hidden="true" />
               )}
             </button>
           </div>
         </div>
       </header>
 
-      <div className="max-w-[1520px] mx-auto px-6 sm:px-9 py-6 pb-8 flex flex-col gap-5">
+      <div className="max-w-[1520px] mx-auto px-3.5 sm:px-9 py-4 sm:py-6 pb-8 flex flex-col gap-4 sm:gap-5">
         {/* Hero Header (Left) + Masuk button positioned above top-right of animation frame */}
-        <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div className="space-y-2 max-w-3xl">
-            <h1 className="text-[28px] sm:text-[34px] lg:text-[40px] font-black tracking-tight text-[#202020] dark:text-white leading-tight">
+        <section className="flex flex-col md:flex-row md:items-end justify-between gap-3 sm:gap-4">
+          <div className="space-y-1.5 sm:space-y-2 max-w-3xl">
+            <h1 className="text-[22px] sm:text-[34px] lg:text-[40px] font-black tracking-tight text-[#202020] dark:text-white leading-snug sm:leading-tight">
               Operasional Tim &amp;{' '}
-              <span className="underline decoration-[#FFD416] decoration-4 underline-offset-4">
+              <span className="underline decoration-[#FFD416] decoration-[3px] sm:decoration-4 underline-offset-4">
                 Jadwal Shift CTSO Real-Time
               </span>
             </h1>
-            <p className="text-sm sm:text-[15px] text-[#647084] dark:text-neutral-400">
+            <p className="text-xs sm:text-[15px] text-[#647084] dark:text-neutral-400 leading-relaxed">
               Visualisasi operasional Badung dan Denpasar yang tersinkron otomatis dengan jadwal shift CTSO sesuai jam WITA saat ini.
             </p>
           </div>
 
-          <div className="shrink-0 self-start md:self-end">
+          <div className="shrink-0 w-full sm:w-auto md:self-end">
             <Link
               to={entryPath}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-extrabold text-[#202020] bg-[#FFD416] hover:bg-[#E5BD00] border border-[#E5BD00] shadow-gx transition-colors"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl text-xs sm:text-sm font-extrabold text-[#202020] bg-[#FFD416] hover:bg-[#E5BD00] border border-[#E5BD00] shadow-gx transition-colors"
             >
               <span>{entryLabel}</span>
               <ArrowRight className="w-4 h-4" aria-hidden="true" />

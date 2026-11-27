@@ -1275,10 +1275,10 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
   }, []);
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 w-full">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 w-full">
       {/* Stage 1: Kantor Utama (Badung) — 2D Pixel Art */}
       <div className="flex flex-col gap-2.5">
-        <article className="relative h-[440px] sm:h-[500px] xl:h-[540px] rounded-2xl overflow-hidden bg-[#c5bca9] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
+        <article className="relative aspect-[384/272] lg:aspect-auto lg:h-[500px] xl:h-[540px] rounded-xl sm:rounded-2xl overflow-hidden bg-[#c5bca9] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
           <div
             style={{
               transform: `scale(${mainZoom})`,
@@ -1305,16 +1305,16 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
                     key={staff.id}
                     ref={(el) => { mainLabelRefs.current[idx] = el; }}
                     style={{ opacity: 0, transform: 'translate(-50%, -50%)' }}
-                    className="absolute inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] leading-none font-extrabold whitespace-nowrap shadow-md border bg-[#18181b]/90 text-white border-white/25"
+                    className="absolute inline-flex items-center gap-0.5 sm:gap-1 px-1 sm:px-1.5 py-0.5 rounded-full text-[8.5px] sm:text-[10px] leading-none font-extrabold whitespace-nowrap shadow-md border bg-[#18181b]/90 text-white border-white/25"
                   >
                     <span
-                      className="w-2 h-2 rounded-full shrink-0 ring-1 ring-white/50"
+                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0 ring-1 ring-white/50"
                       style={{ backgroundColor: staff.shiftColor || '#FFD416' }}
                       title={`Shift: ${staff.shiftCode}`}
                     />
                     <span
                       ref={(el) => { mainStatusRefs.current[idx] = el; }}
-                      className="text-[10.5px] leading-none"
+                      className="text-[9px] sm:text-[10.5px] leading-none"
                     >
                       💻
                     </span>
@@ -1325,11 +1325,11 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
             </div>
           </div>
 
-          <div className="pointer-events-none absolute top-3 left-3.5 right-3.5 z-10 flex items-center justify-between gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-[#FFD416] text-[#202020] shadow-gx">
+          <div className="pointer-events-none absolute top-2 sm:top-3 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 z-10 flex items-center justify-between gap-2">
+            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-extrabold bg-[#FFD416] text-[#202020] shadow-gx">
               Badung
             </span>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#202020]/85 text-white border border-white/15">
+            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#202020]/85 text-white border border-white/15">
               {mainRoster.length} Staff
             </span>
           </div>
@@ -1357,7 +1357,7 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
 
       {/* Stage 2: Ruang Kayu (Denpasar) — 2D Pixel Art */}
       <div className="flex flex-col gap-2.5">
-        <article className="relative h-[440px] sm:h-[500px] xl:h-[540px] rounded-2xl overflow-hidden bg-[#3b2415] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
+        <article className="relative aspect-[320/232] lg:aspect-auto lg:h-[500px] xl:h-[540px] rounded-xl sm:rounded-2xl overflow-hidden bg-[#3b2415] border border-slate-200 dark:border-neutral-800 shadow-clean-xl flex items-center justify-center">
           <div
             style={{
               transform: `scale(${studioZoom})`,
@@ -1383,16 +1383,16 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
                     key={staff.id}
                     ref={(el) => { studioLabelRefs.current[idx] = el; }}
                     style={{ opacity: 0, transform: 'translate(-50%, -50%)' }}
-                    className="absolute inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10.5px] leading-none font-extrabold whitespace-nowrap shadow-md border bg-[#18181b]/90 text-white border-white/25"
+                    className="absolute inline-flex items-center gap-0.5 sm:gap-1 px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10.5px] leading-none font-extrabold whitespace-nowrap shadow-md border bg-[#18181b]/90 text-white border-white/25"
                   >
                     <span
-                      className="w-2 h-2 rounded-full shrink-0 ring-1 ring-white/50"
+                      className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full shrink-0 ring-1 ring-white/50"
                       style={{ backgroundColor: staff.shiftColor || '#FFD416' }}
                       title={`Shift: ${staff.shiftCode}`}
                     />
                     <span
                       ref={(el) => { studioStatusRefs.current[idx] = el; }}
-                      className="text-[11px] leading-none"
+                      className="text-[9.5px] sm:text-[11px] leading-none"
                     >
                       💻
                     </span>
@@ -1403,11 +1403,11 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
             </div>
           </div>
 
-          <div className="pointer-events-none absolute top-3 left-3.5 right-3.5 z-10 flex items-center justify-between gap-2">
-            <span className="px-3 py-1 rounded-full text-xs font-extrabold bg-[#202020] text-[#FFD416] border border-[#FFD416]/40 shadow-clean-md">
+          <div className="pointer-events-none absolute top-2 sm:top-3 left-2.5 sm:left-3.5 right-2.5 sm:right-3.5 z-10 flex items-center justify-between gap-2">
+            <span className="px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full text-[11px] sm:text-xs font-extrabold bg-[#202020] text-[#FFD416] border border-[#FFD416]/40 shadow-clean-md">
               Denpasar
             </span>
-            <span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#202020]/85 text-white border border-white/15">
+            <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#202020]/85 text-white border border-white/15">
               {studioRoster.length} Staff
             </span>
           </div>
@@ -1433,22 +1433,22 @@ export const PixelOfficeStage: React.FC<PixelOfficeStageProps> = ({
         </article>
       </div>
 
-      {/* Gen-Z Relatable CTSO Team & Division Motivation Strip (Seamless, fixed 2-line height) */}
-      <div className="lg:col-span-2 w-full border-t border-slate-200/80 dark:border-neutral-800/90 mt-2 pt-6 pb-2 px-1">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 w-full">
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex flex-wrap items-center gap-2.5">
-              <span className="text-base sm:text-[17px] font-black tracking-tight text-[#202020] dark:text-[#FFD416]">
+      {/* Gen-Z Relatable CTSO Team & Division Motivation Strip (Seamless, fixed 2-line height on desktop) */}
+      <div className="lg:col-span-2 w-full border-t border-slate-200/80 dark:border-neutral-800/90 mt-1 sm:mt-2 pt-4 sm:pt-6 pb-2 px-0.5 sm:px-1">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 w-full">
+          <div className="flex-1 min-w-0 space-y-1.5 sm:space-y-2">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
+              <span className="text-sm sm:text-[17px] font-black tracking-tight text-[#202020] dark:text-[#FFD416]">
                 CTSO Daily Vibes
               </span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFD416]/15 text-[#5E4C00] dark:text-[#FFD416]">
+              <span className="px-2 sm:px-2.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-bold bg-[#FFD416]/15 text-[#5E4C00] dark:text-[#FFD416]">
                 {CTSO_TEAM_QUOTES[quoteIdx].mood}
               </span>
-              <span className="text-xs font-semibold text-slate-400 dark:text-neutral-500">
+              <span className="text-[11px] sm:text-xs font-semibold text-slate-400 dark:text-neutral-500">
                 {CTSO_TEAM_QUOTES[quoteIdx].tag}
               </span>
             </div>
-            <p className="text-[15px] sm:text-base font-medium text-slate-500 dark:text-neutral-400 leading-relaxed min-h-[3.1rem] line-clamp-2 pt-0.5">
+            <p className="text-[13px] sm:text-base font-medium text-slate-500 dark:text-neutral-400 leading-relaxed min-h-[3.75rem] sm:min-h-[3.1rem] sm:line-clamp-2 pt-0.5">
               “{CTSO_TEAM_QUOTES[quoteIdx].quote}”
             </p>
           </div>
