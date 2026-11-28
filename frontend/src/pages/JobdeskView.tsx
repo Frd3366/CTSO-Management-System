@@ -653,11 +653,43 @@ export const JobdeskView: React.FC = () => {
       {viewMode === 'daily' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
           {jobdeskCards.map((col) => {
-            const dailyItems = sortByEmployeeOrder(
+            const getShiftRank = (code: string) => {
+              const idx = shifts.findIndex((s) => s.code.toLowerCase() === (code || '').toLowerCase());
+              if (idx >= 0) {
+                const sh = shifts[idx];
+                const startMin = sh.startTime && sh.startTime.includes(':')
+                  ? parseInt(sh.startTime.split(':')[0], 10) * 60 + parseInt(sh.startTime.split(':')[1], 10)
+                  : 9999;
+                return startMin;
+              }
+              return 9999;
+            };
+            const baseItems = sortByEmployeeOrder(
               visibleSchedules.filter((s) => s.date === currentDateStr && s.jobdeskCode === col.code),
               (s) => s.employeeName || '',
               sortMode
             );
+            const dailyItems = [...baseItems].sort((a, b) => {
+              // 1. Sort by Shift first (chronological start time)
+              const shiftDiff = getShiftRank(a.shiftCode) - getShiftRank(b.shiftCode);
+              if (shiftDiff !== 0) return shiftDiff;
+              const shiftCodeDiff = (a.shiftCode || '').localeCompare(b.shiftCode || '', 'id', {
+                numeric: true,
+                sensitivity: 'base'
+              });
+              if (shiftCodeDiff !== 0) return shiftCodeDiff;
+
+              // 2. Then sort by Agent (Agent 1, Agent 2, Agent 3...; assigned before empty)
+              const agentA = (a.agent || '').trim();
+              const agentB = (b.agent || '').trim();
+              if (agentA && !agentB) return -1;
+              if (!agentA && agentB) return 1;
+              if (agentA && agentB) {
+                const agentDiff = agentA.localeCompare(agentB, 'id', { numeric: true, sensitivity: 'base' });
+                if (agentDiff !== 0) return agentDiff;
+              }
+              return 0;
+            });
 
             return (
               <div key={col.code} className="flex flex-col gap-3">
@@ -726,27 +758,40 @@ export const JobdeskView: React.FC = () => {
                           </span>
                         </div>
 
-                        <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-current/15">
-                          <div className="flex items-center gap-1.5 flex-wrap">
+                        <div className="grid grid-cols-3 items-center gap-1 text-[11px] pt-1.5 border-t border-current/15">
+                          <div className="justify-self-start">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${getShiftBadgeStyle(item.shiftCode).badge}`}>
                               {item.shiftCode}
                             </span>
+                          </div>
+
+                          <div className="justify-self-center">
                             {item.agent && (
-                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-black font-mono shadow-2xs inline-flex items-center gap-1 ${getAgentPillStyle(item.agent).bg}`}>
+                              <span className={`px-1.5 py-0.5 rounded text-[9px] font-black font-mono shadow-2xs inline-flex items-center gap-1 whitespace-nowrap ${getAgentPillStyle(item.agent).bg}`}>
                                 <span className={`w-1.5 h-1.5 rounded-full ${getAgentPillStyle(item.agent).dot}`} />
                                 <span>{item.agent}</span>
                               </span>
                             )}
                           </div>
 
-                          {item.note && (
-                            <span
-                              className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current ml-auto"
-                              title={`Ada catatan: ${item.note}`}
-                            >
-                              <StickyNote className="w-3.5 h-3.5" aria-hidden="true" />
+                          <div className="justify-self-end flex items-center gap-1 min-w-0">
+                            <span className="inline-flex items-center gap-1 text-current opacity-85 text-[10px] font-medium font-mono truncate">
+                              <MapPin className="w-3 h-3 text-current opacity-75 shrink-0" aria-hidden="true" />
+                              <span className="truncate">
+                                {item.location ||
+                                  employees.find((e) => e.id === item.employeeId || e.employeeNo === item.employeeCode)?.defaultLocation ||
+                                  '-'}
+                              </span>
                             </span>
-                          )}
+                            {item.note && (
+                              <span
+                                className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current shrink-0"
+                                title={`Ada catatan: ${item.note}`}
+                              >
+                                <StickyNote className="w-3 h-3" aria-hidden="true" />
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </button>
                     ))

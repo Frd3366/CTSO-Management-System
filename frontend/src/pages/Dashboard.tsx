@@ -537,8 +537,8 @@ export const Dashboard: React.FC = () => {
                       </span>
                     </div>
 
-                  {/* Column Items */}
-                  <div className="p-3.5 space-y-2.5 flex-1 min-h-[160px] bg-slate-50/50 dark:bg-white/[0.02]">
+                  {/* Column Items (Fixed max-height with internal scroll) */}
+                  <div className="p-3 space-y-2 flex-1 min-h-[140px] max-h-[250px] overflow-y-auto bg-slate-50/50 dark:bg-white/[0.02]">
                     {col.items.length === 0 ? (
                       <div className="h-full flex items-center justify-center text-center p-6 text-xs text-slate-500 dark:text-gray-400 italic">
                         Tidak ada personel bertugas di {col.code} pada tanggal ini.
@@ -551,24 +551,13 @@ export const Dashboard: React.FC = () => {
                             key={item.id}
                             type="button"
                             onClick={() => openKpiDetail(`Assignment Detail: ${item.employeeName}`, [item])}
-                            className={`w-full text-left p-3 rounded-xl border-0 hover:opacity-95 space-y-2 transition-all ${
+                            className={`w-full text-left p-2.5 rounded-xl border-0 hover:opacity-95 space-y-1.5 transition-all ${
                               getJobdeskBadgeStyle(col.code).card
                             }`}
                           >
-                            <div className="flex items-center justify-between">
-                              <span className="text-xs font-extrabold text-current truncate">
-                                {item.employeeName}
-                              </span>
-                              <span className="text-[10px] font-mono text-current opacity-80">
-                                {item.employeeCode}
-                              </span>
+                            <div className="text-xs font-extrabold text-current truncate">
+                              {item.employeeName}
                             </div>
-
-                            {emp && (
-                              <div className="text-[10px] text-current opacity-85 truncate">
-                                {emp.role || emp.level || 'CTSO Staff'}
-                              </div>
-                            )}
 
                             <div className="flex items-center justify-between text-[11px] pt-1.5 border-t border-current/15">
                               <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${getShiftBadgeStyle(item.shiftCode).badge}`}>
@@ -577,7 +566,7 @@ export const Dashboard: React.FC = () => {
 
                               <span className="flex items-center gap-1 text-current opacity-85 text-[10px] font-medium font-mono">
                                 <MapPin className="w-3 h-3 text-current opacity-75" aria-hidden="true" />
-                                {item.location || '-'}
+                                {item.location || emp?.defaultLocation || '-'}
                               </span>
                             </div>
                           </button>
