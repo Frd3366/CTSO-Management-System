@@ -45,33 +45,23 @@ export interface TelegramAlertData {
   hub?: string;
 }
 
+export const getTelegramRequestEmoji = (jenis: string): string => {
+  const j = (jenis || '').toLowerCase();
+  if (j.includes('tukar') || j.includes('swap') || j.includes('exchange')) return '🔄';
+  if (j.includes('ganti shift') || j.includes('change shift')) return '🕒';
+  if (j.includes('sakit')) return '🤒';
+  if (j.includes('cuti')) return '🏖️';
+  if (j.includes('izin') || j.includes('ijin')) return '📝';
+  return '📌';
+};
+
 export const buildTelegramMessage = (data: TelegramAlertData): string => {
-  // Build detail lines with Tanggal & Lokasi inside Detail Pengajuan
-  const detailLines: string[] = [];
-  if (data.date) {
-    detailLines.push(`• Tanggal : <code>${data.date}</code>`);
-  }
-  if (data.hub) {
-    detailLines.push(`• Lokasi : <code>${data.hub}</code>`);
-  }
-
-  data.detail
-    .split('\n')
-    .map((line) => line.trim())
-    .filter(Boolean)
-    .forEach((line) => {
-      detailLines.push(line.startsWith('•') || line.startsWith('-') ? line : `• ${line}`);
-    });
-
-  const formattedDetail = detailLines.join('\n');
-
+  const emoji = getTelegramRequestEmoji(data.jenis);
   return (
-    `<b>Pengajuan Baru: ${data.jenis}</b>\n\n` +
+    `${emoji} <b>Pengajuan Baru CTSO</b>\n\n` +
     `Pemohon : <code>${data.nama}</code>\n` +
-    `Diajukan : <code>${data.waktu}</code>\n\n` +
-    `<b>Detail Pengajuan:</b>\n` +
-    `${formattedDetail}\n\n` +
-    `Status: Menunggu Review Supervisor ⏳`
+    `Jenis : <code>${data.jenis}</code>\n` +
+    `Tanggal : <code>${data.date}</code>`
   );
 };
 

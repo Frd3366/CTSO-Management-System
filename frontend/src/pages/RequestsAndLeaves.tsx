@@ -1164,20 +1164,15 @@ export const RequestsAndLeaves: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed bg-white dark:bg-black/40 p-3 rounded-lg border border-slate-200/60 dark:border-white/5 font-mono">
-                  <p className="font-bold text-slate-900 dark:text-white mb-3">Pengajuan Baru: Tukar Shift (Swap)</p>
+                  <p className="font-bold text-slate-900 dark:text-white mb-2">🔄 Pengajuan Baru CTSO</p>
                   <div className="space-y-0.5">
                     <p>Pemohon : <code>I Putu Wijaya (CTSO-0101)</code></p>
-                    <p>Diajukan : <code>{formatWitaNow()}</code></p>
+                    <p>Jenis : <code>Tukar Shift (Swap)</code></p>
+                    <p>Tanggal : <code>Rabu, 18/11/2026</code></p>
                   </div>
-                  <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 space-y-0.5">
-                    <p className="font-bold text-slate-800 dark:text-slate-100">Detail Pengajuan:</p>
-                    <p>• Tanggal : <code>Rabu, 18/11/2026</code></p>
-                    <p>• Lokasi : <code>Badung Hub</code></p>
-                    <p>• Rekan Pengganti : Kadek Surya</p>
-                    <p>• Perubahan Shift : Pagi 7 (07:00) ➔ Siang (13:00)</p>
-                    <p>• Keterangan : Keperluan keluarga mendesak</p>
+                  <div className="mt-2.5 pt-2 border-t border-slate-100 dark:border-white/5 text-[10px] text-slate-500 dark:text-slate-400">
+                    🔄 Tukar Shift · 🕒 Ganti Shift · 🏖️ Cuti · 🤒 Sakit · 📝 Izin
                   </div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-3">Status: Menunggu Review Supervisor ⏳</p>
                 </div>
               </div>
 
