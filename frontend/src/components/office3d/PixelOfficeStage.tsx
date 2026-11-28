@@ -6,6 +6,7 @@ export interface OfficeAvatarData {
   name: string;
   nickname?: string;
   fullName?: string;
+  gender?: 'male' | 'female';
   role: string;
   shiftCode: string;
   shiftColor?: string;
@@ -43,6 +44,7 @@ interface Point {
 interface PixelDesk {
   id: number;
   pic?: string;
+  isStool?: boolean;
   x: number;
   y: number;
   sitX: number;
@@ -116,6 +118,10 @@ const MAIN_DESKS: PixelDesk[] = [
   { id: 9, pic: 'syarif', x: 144, y: 230, sitX: 144, sitY: 214, aisleX: 144, aisleY: 184, facing: 'down' },
   { id: 10, pic: 'ilda', x: 224, y: 230, sitX: 224, sitY: 214, aisleX: 224, aisleY: 184, facing: 'down' },
   { id: 11, pic: 'novi', x: 304, y: 230, sitX: 304, sitY: 214, aisleX: 304, aisleY: 184, facing: 'down' },
+  // Round Stools beside Water Dispenser (for Internship team when PCs are taken by other teams)
+  { id: 12, isStool: true, x: 74, y: 118, sitX: 74, sitY: 118, aisleX: 50, aisleY: 118, facing: 'right' },
+  { id: 13, isStool: true, x: 74, y: 138, sitX: 74, sitY: 138, aisleX: 50, aisleY: 138, facing: 'right' },
+  { id: 14, isStool: true, x: 74, y: 158, sitX: 74, sitY: 158, aisleX: 50, aisleY: 158, facing: 'right' },
 ];
 
 const MAIN_TOILET_POI: PixelPOI = {
@@ -138,44 +144,63 @@ const STUDIO_TOILET_POI: PixelPOI = {
 
 function assignMainDeskSlots(roster: OfficeAvatarData[]): Array<OfficeAvatarData | null> {
   const slots: Array<OfficeAvatarData | null> = new Array(MAIN_DESKS.length).fill(null);
-  const unassigned: OfficeAvatarData[] = [];
+  const pcIndices = MAIN_DESKS.map((d, i) => (!d.isStool ? i : -1)).filter((i) => i >= 0);
+  const stoolIndices = MAIN_DESKS.map((d, i) => (d.isStool ? i : -1)).filter((i) => i >= 0);
+
+  const isInternship = (staff: OfficeAvatarData) =>
+    (staff.role || '').toLowerCase().includes('inter');
+
+  const regularStaff = roster.filter((s) => !isInternship(s));
+  const internStaff = roster.filter((s) => isInternship(s));
 
   const findPicDesk = (staff: OfficeAvatarData, exactNicknameOnly: boolean): number => {
     const nick = (staff.nickname || '').trim().toLowerCase();
     if (nick) {
-      const idx = MAIN_DESKS.findIndex((d, i) => !slots[i] && d.pic === nick);
-      if (idx >= 0) return idx;
+      const idx = pcIndices.find((i) => !slots[i] && MAIN_DESKS[i].pic === nick);
+      if (idx !== undefined) return idx;
     }
     if (exactNicknameOnly) return -1;
     const tokens = `${staff.nickname || ''} ${staff.fullName || ''} ${staff.name || ''}`
       .toLowerCase()
       .split(/[^a-z0-9]+/)
       .filter(Boolean);
-    return MAIN_DESKS.findIndex((d, i) => !slots[i] && d.pic && tokens.includes(d.pic));
+    const idx = pcIndices.find((i) => !slots[i] && MAIN_DESKS[i].pic && tokens.includes(MAIN_DESKS[i].pic!));
+    return idx !== undefined ? idx : -1;
   };
 
-  // Pass 1: exact nickname PIC match
+  // 1. Regular staff get PC desks first: exact nickname PIC match -> word match -> remaining empty PCs
   const afterPass1: OfficeAvatarData[] = [];
-  for (const staff of roster) {
+  for (const staff of regularStaff) {
     const deskIdx = findPicDesk(staff, true);
     if (deskIdx >= 0) slots[deskIdx] = staff;
     else afterPass1.push(staff);
   }
 
-  // Pass 2: word match on full name / display name
+  const unassignedRegular: OfficeAvatarData[] = [];
   for (const staff of afterPass1) {
     const deskIdx = findPicDesk(staff, false);
     if (deskIdx >= 0) slots[deskIdx] = staff;
-    else unassigned.push(staff);
+    else unassignedRegular.push(staff);
   }
 
-  // Pass 3: fill remaining empty desks with non-PIC staff
-  let emptyCursor = 0;
-  for (const staff of unassigned) {
-    while (emptyCursor < slots.length && slots[emptyCursor] !== null) emptyCursor++;
-    if (emptyCursor < slots.length) {
-      slots[emptyCursor] = staff;
-      emptyCursor++;
+  for (const staff of unassignedRegular) {
+    const freePc = pcIndices.find((i) => slots[i] === null);
+    if (freePc !== undefined) {
+      slots[freePc] = staff;
+    } else {
+      const freeStool = stoolIndices.find((i) => slots[i] === null);
+      if (freeStool !== undefined) slots[freeStool] = staff;
+    }
+  }
+
+  // 2. Internship team sits on round stools beside the water dispenser (or free PC if stools are full)
+  for (const staff of internStaff) {
+    const freeStool = stoolIndices.find((i) => slots[i] === null);
+    if (freeStool !== undefined) {
+      slots[freeStool] = staff;
+    } else {
+      const freePc = pcIndices.find((i) => slots[i] === null);
+      if (freePc !== undefined) slots[freePc] = staff;
     }
   }
 
@@ -378,6 +403,20 @@ function drawChair(ctx: CanvasRenderingContext2D, cx: number, cy: number, facing
   else px(ctx, cx - 8, cy - 6, 4, 12, '#111318');
 }
 
+function drawRoundStool(ctx: CanvasRenderingContext2D, cx: number, cy: number) {
+  // Subtle floor shadow
+  px(ctx, cx - 6, cy + 1, 12, 5, 'rgba(15, 20, 30, 0.22)');
+  // Stool metal legs
+  px(ctx, cx - 4, cy + 1, 2, 4, '#27272a');
+  px(ctx, cx + 2, cy + 1, 2, 4, '#27272a');
+  // Round wooden/dark seat cushion (pixel circle)
+  px(ctx, cx - 5, cy - 4, 10, 8, '#18181b');
+  px(ctx, cx - 6, cy - 3, 12, 6, '#18181b');
+  px(ctx, cx - 4, cy - 3, 8, 6, '#b57b45');
+  px(ctx, cx - 5, cy - 2, 10, 4, '#c99259');
+  px(ctx, cx - 3, cy - 2, 4, 2, '#e2b483'); // highlight glint
+}
+
 /**
  * Draws a charming Stardew Valley-style 16x24 pixel-art character frame-by-frame!
  */
@@ -392,6 +431,7 @@ function drawPixelAgent(
   const y = Math.round(agent.y);
   const isWalking = agent.state === 'WALKING_TO_POI' || agent.state === 'WALKING_BACK';
   const isSitting = agent.state === 'WORKING';
+  const effectiveGender = meta?.gender || agent.gender;
 
   // Golden CMS Jobdesk Highlight Ring (pulsing pixel oval!)
   if (highlighted) {
@@ -429,7 +469,7 @@ function drawPixelAgent(
   // Front shirt & tie / Back yellow CTSO badge
   if (agent.facing === 'down') {
     px(ctx, x - 2, by - 7, 4, 5, '#f8fafc');
-    if (agent.gender === 'male' && agent.tieColor) {
+    if (effectiveGender === 'male' && agent.tieColor) {
       px(ctx, x - 1, by - 6, 2, 4, agent.tieColor);
     }
     px(ctx, x + 3, by - 5, 2, 2, '#FFD416'); // yellow CTSO chest badge
@@ -468,13 +508,13 @@ function drawPixelAgent(
     // Back of head covered in hair
     px(ctx, hx, hy, 12, 9, agent.hair);
     px(ctx, hx + 2, hy + 1, 8, 2, 'rgba(255,255,255,0.12)');
-    if (agent.gender === 'female') {
+    if (effectiveGender === 'female') {
       px(ctx, hx, hy + 8, 12, 4, agent.hair);
     }
   } else if (agent.facing === 'left' || agent.facing === 'right') {
     const dir = agent.facing === 'right' ? 1 : -1;
     px(ctx, hx, hy, 12, 3, agent.hair);
-    px(ctx, dir === 1 ? hx : hx + 7, hy + 3, 5, agent.gender === 'female' ? 8 : 5, agent.hair);
+    px(ctx, dir === 1 ? hx : hx + 7, hy + 3, 5, effectiveGender === 'female' ? 8 : 5, agent.hair);
     // Side eye
     const ex = dir === 1 ? hx + 8 : hx + 2;
     if (!agent.isBlinking) {
@@ -486,12 +526,12 @@ function drawPixelAgent(
   } else {
     // Front facing: clearly visible Stardew face!
     px(ctx, hx, hy, 12, 3, agent.hair);
-    px(ctx, hx, hy + 3, 2, agent.gender === 'female' ? 7 : 3, agent.hair);
-    px(ctx, hx + 10, hy + 3, 2, agent.gender === 'female' ? 7 : 3, agent.hair);
+    px(ctx, hx, hy + 3, 2, effectiveGender === 'female' ? 7 : 3, agent.hair);
+    px(ctx, hx + 10, hy + 3, 2, effectiveGender === 'female' ? 7 : 3, agent.hair);
     // Hair highlight
     px(ctx, hx + 2, hy + 1, 6, 1, 'rgba(255,255,255,0.18)');
     // Rosy cheeks
-    if (agent.gender === 'female') {
+    if (effectiveGender === 'female') {
       px(ctx, hx + 1, hy + 7, 2, 1, '#f472b6');
       px(ctx, hx + 9, hy + 7, 2, 1, '#f472b6');
     }
@@ -729,11 +769,15 @@ function renderMainOfficePixel(
   px(ctx, 276, 115, 13, 13, '#1d4ed8'); // backpack
   px(ctx, 298, 116, 14, 11, '#1e293b'); // dark work bag
 
-  // --- Draw All 11 Desks & Chairs (PIC mapped) ---
+  // --- Draw All 11 PC Desks & Chairs (PIC mapped) + 3 Round Stools beside Dispenser ---
   MAIN_DESKS.forEach((desk, idx) => {
-    drawChair(ctx, desk.sitX, desk.sitY, desk.facing);
-    const active = Boolean(slots[idx]) && agents[idx].state === 'WORKING';
-    drawMainDesk(ctx, desk, active, time);
+    if (desk.isStool) {
+      drawRoundStool(ctx, desk.sitX, desk.sitY);
+    } else {
+      drawChair(ctx, desk.sitX, desk.sitY, desk.facing);
+      const active = Boolean(slots[idx]) && agents[idx].state === 'WORKING';
+      drawMainDesk(ctx, desk, active, time);
+    }
   });
 
   // --- Draw Active Agents sorted by Y (proper 2D top-down depth!) ---

@@ -88,8 +88,8 @@ export const Login: React.FC = () => {
       return;
     }
 
-    if (regPassword.length < 4) {
-      setRegisterError('Kata sandi minimal 4 karakter.');
+    if (regPassword.length < 8) {
+      setRegisterError('Kata sandi minimal 8 karakter.');
       return;
     }
 

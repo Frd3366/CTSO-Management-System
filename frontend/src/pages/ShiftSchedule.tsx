@@ -7,6 +7,7 @@ import { GoogleSheetsBackupModal } from '../components/common/GoogleSheetsBackup
 import { getGoogleSheetsConfig, GoogleSheetsBackupConfig } from '../utils/googleSheetsBackup';
 import { ScheduleAssignment, WorkLocation } from '../types';
 import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, toCssSlug, isOffShiftCode } from '../utils/codeStyles';
+import { sortByEmployeeOrder, EmployeeSortMode } from '../utils/employeeSort';
 import { getStoredHolidays, saveStoredHolidays, HolidayRecord } from '../utils/holidayUtils';
 import { parseLocalDate, formatLocalDateIso, getTodayIso, getWeekAheadIso, formatDateDMY } from '../utils/dateUtils';
 import {
@@ -61,6 +62,7 @@ export const ShiftSchedule: React.FC = () => {
   const [filterJobdesk, setFilterJobdesk] = useState<string>('All');
   const [filterShift, setFilterShift] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortMode, setSortMode] = useState<EmployeeSortMode>('default');
 
   // Modals state
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
@@ -201,9 +203,9 @@ export const ShiftSchedule: React.FC = () => {
     });
   }, [schedules, currentUser]);
 
-  // Filtered employees
+  // Filtered employees (sorted by custom CTSO order or alphabetical)
   const filteredEmployees = useMemo(() => {
-    return employees.filter((emp) => {
+    const list = employees.filter((emp) => {
       if (currentUser?.role === 'SPV') {
         // Scope to team if SPV (PRD Section 2.2)
         // SPV Badung oversees core and fop
@@ -217,7 +219,8 @@ export const ShiftSchedule: React.FC = () => {
       }
       return true;
     });
-  }, [employees, currentUser, filterLocation, searchQuery]);
+    return sortByEmployeeOrder(list, (emp) => emp.name, sortMode);
+  }, [employees, currentUser, filterLocation, searchQuery, sortMode]);
 
   // Summary Cards for Selected Date / Period (PRD Section 5.5)
   const shiftSummaries = useMemo(() => {
@@ -621,6 +624,17 @@ export const ShiftSchedule: React.FC = () => {
             <option value="Denpasar">Denpasar</option>
           </select>
 
+          <select
+            aria-label="Urutan Karyawan"
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as EmployeeSortMode)}
+            className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-gray-200 bg-white dark:bg-[#18181A]"
+          >
+            <option value="default">Urutan Default</option>
+            <option value="az">Abjad (A → Z)</option>
+            <option value="za">Abjad (Z → A)</option>
+          </select>
+
           <div className="relative">
             <Search className="w-3.5 h-3.5 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" aria-hidden="true" />
             <input
@@ -907,6 +921,17 @@ export const ShiftSchedule: React.FC = () => {
                                 </div>
                               </div>
                             )
+                          ) : isSunday || holidayName ? (
+                            <div
+                              className={`py-2 px-1.5 rounded-xl border-0 flex flex-col items-center justify-center text-center font-black text-[10px] tracking-wider uppercase transition-all opacity-90 ${
+                                getShiftBadgeStyle('OFF').card
+                              }`}
+                              title={holidayName ? `Libur Nasional: ${holidayName} (Klik untuk ubah)` : 'Hari Minggu — Weekly Day Off otomatis (Klik untuk ubah)'}
+                            >
+                              <div className="font-mono font-black text-xs text-center w-full leading-tight">
+                                WEEKLY DAY OFF
+                              </div>
+                            </div>
                           ) : (
                             <div
                               className="w-6 h-6 rounded-full bg-slate-200/80 dark:bg-white/10 hover:bg-[#F9C900] hover:text-[#111111] text-slate-500 dark:text-gray-400 font-extrabold text-xs flex items-center justify-center mx-auto transition-all"
@@ -1074,6 +1099,17 @@ export const ShiftSchedule: React.FC = () => {
                                 </div>
                               </div>
                             )
+                          ) : isSunday || hasHoliday ? (
+                            <div
+                              className={`py-2 px-1.5 rounded-xl border-0 flex flex-col items-center justify-center text-center font-black text-[10px] tracking-wider uppercase transition-all opacity-90 ${
+                                getShiftBadgeStyle('OFF').card
+                              }`}
+                              title={hasHoliday ? `Libur Nasional: ${holidays[d.iso]} (Klik untuk ubah)` : 'Hari Minggu — Weekly Day Off otomatis (Klik untuk ubah)'}
+                            >
+                              <div className="font-mono font-black text-xs text-center w-full leading-tight">
+                                WEEKLY DAY OFF
+                              </div>
+                            </div>
                           ) : (
                             <div
                               className="w-6 h-6 rounded-full bg-slate-200/80 dark:bg-white/10 hover:bg-indigo-600 hover:text-white text-slate-500 dark:text-gray-400 font-extrabold text-xs flex items-center justify-center mx-auto transition-all"

@@ -28,6 +28,7 @@ import { ScheduleAssignment, WorkLocation } from '../types';
 import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, toCssSlug, parseJobdeskTasks, getAgentPillStyle, isOffShiftCode } from '../utils/codeStyles';
 import { getStoredHolidays, saveStoredHolidays, HolidayRecord } from '../utils/holidayUtils';
 import { parseLocalDate, formatLocalDateIso, getTodayIso } from '../utils/dateUtils';
+import { sortByEmployeeOrder, EmployeeSortMode } from '../utils/employeeSort';
 
 export const JobdeskView: React.FC = () => {
   const { schedules, jobdesks, shifts, employees, currentUser, addSchedule, updateSchedule, deleteSchedule, updateJobdesk } =
@@ -52,6 +53,7 @@ export const JobdeskView: React.FC = () => {
   const [currentDateStr, setCurrentDateStr] = useState<string>(() => getTodayIso());
   const [filterLocation, setFilterLocation] = useState<'All' | WorkLocation>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [sortMode, setSortMode] = useState<EmployeeSortMode>('default');
 
   // Holiday (Hari Besar) State
   const [holidays, setHolidays] = useState<HolidayRecord>(() => getStoredHolidays());
@@ -291,16 +293,17 @@ export const JobdeskView: React.FC = () => {
     setIsEditingJobdeskMaster(false);
   };
 
-  // Filtered employees
+  // Filtered employees (sorted by custom CTSO order or alphabetical)
   const filteredEmployees = useMemo(() => {
-    return employees.filter((emp) => {
+    const list = employees.filter((emp) => {
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         return emp.name.toLowerCase().includes(q) || emp.employeeNo.toLowerCase().includes(q);
       }
       return true;
     });
-  }, [employees, searchQuery]);
+    return sortByEmployeeOrder(list, (emp) => emp.name, sortMode);
+  }, [employees, searchQuery, sortMode]);
 
   // Date Navigation
   const handleNavigateDate = (direction: 'prev' | 'next') => {
@@ -592,6 +595,17 @@ export const JobdeskView: React.FC = () => {
               className="pl-9 pr-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/5 text-xs text-[#0F172A] dark:text-white placeholder-slate-500 w-44"
             />
           </div>
+
+          <select
+            aria-label="Urutan Karyawan"
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as EmployeeSortMode)}
+            className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-gray-200 bg-white dark:bg-[#18181A]"
+          >
+            <option value="default">Urutan Default</option>
+            <option value="az">Abjad (A → Z)</option>
+            <option value="za">Abjad (Z → A)</option>
+          </select>
         </div>
       </div>
 
@@ -639,8 +653,10 @@ export const JobdeskView: React.FC = () => {
       {viewMode === 'daily' && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
           {jobdeskCards.map((col) => {
-            const dailyItems = visibleSchedules.filter(
-              (s) => s.date === currentDateStr && s.jobdeskCode === col.code
+            const dailyItems = sortByEmployeeOrder(
+              visibleSchedules.filter((s) => s.date === currentDateStr && s.jobdeskCode === col.code),
+              (s) => s.employeeName || '',
+              sortMode
             );
 
             return (
@@ -830,6 +846,15 @@ export const JobdeskView: React.FC = () => {
                               showToast(`Karyawan sedang libur (${assignment.shiftCode}). Hari libur tidak dapat dialokasikan jobdesk.`, 'warning');
                               return;
                             }
+                            if (!assignment && (isSunday || hasHoliday)) {
+                              showToast(
+                                hasHoliday
+                                  ? `Hari Libur (${holidays[day.iso]}) otomatis Weekly Day Off. Tetapkan shift kerja di Shift Schedule terlebih dahulu jika ada dinas.`
+                                  : 'Hari Minggu otomatis Weekly Day Off. Tetapkan shift kerja di Shift Schedule terlebih dahulu jika ada dinas.',
+                                'warning'
+                              );
+                              return;
+                            }
                             if (canManageJobdesk) {
                               handleOpenAddJobdesk(assignment?.jobdeskCode, day.iso, emp.id, assignment?.shiftCode);
                             } else if (assignment) {
@@ -912,6 +937,13 @@ export const JobdeskView: React.FC = () => {
                                 </div>
                               </div>
                             )
+                          ) : isSunday || hasHoliday ? (
+                            <div
+                              className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center opacity-90 ${getShiftBadgeStyle('OFF').card}`}
+                              title={hasHoliday ? `Libur Nasional: ${holidays[day.iso]}` : 'Hari Minggu — Weekly Day Off otomatis'}
+                            >
+                              <div>WEEKLY DAY OFF</div>
+                            </div>
                           ) : (
                             <div
                               className="w-6 h-6 rounded-full bg-slate-200/80 dark:bg-white/10 hover:bg-[#F9C900] hover:text-[#111111] text-slate-500 dark:text-gray-400 font-extrabold text-xs flex items-center justify-center mx-auto transition-all"
@@ -1008,6 +1040,15 @@ export const JobdeskView: React.FC = () => {
                               showToast(`Karyawan sedang libur (${assignment.shiftCode}). Hari libur tidak dapat dialokasikan jobdesk.`, 'warning');
                               return;
                             }
+                            if (!assignment && (isSunday || hasHoliday)) {
+                              showToast(
+                                hasHoliday
+                                  ? `Hari Libur (${holidays[day.iso]}) otomatis Weekly Day Off. Tetapkan shift kerja di Shift Schedule terlebih dahulu jika ada dinas.`
+                                  : 'Hari Minggu otomatis Weekly Day Off. Tetapkan shift kerja di Shift Schedule terlebih dahulu jika ada dinas.',
+                                'warning'
+                              );
+                              return;
+                            }
                             if (canManageJobdesk) {
                               handleOpenAddJobdesk(assignment?.jobdeskCode, day.iso, emp.id, assignment?.shiftCode);
                             } else if (assignment) {
@@ -1090,6 +1131,13 @@ export const JobdeskView: React.FC = () => {
                                 </div>
                               </div>
                             )
+                          ) : isSunday || hasHoliday ? (
+                            <div
+                              className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center opacity-90 ${getShiftBadgeStyle('OFF').card}`}
+                              title={hasHoliday ? `Libur Nasional: ${holidays[day.iso]}` : 'Hari Minggu — Weekly Day Off otomatis'}
+                            >
+                              <div>WEEKLY DAY OFF</div>
+                            </div>
                           ) : (
                             <div
                               className="w-6 h-6 rounded-full bg-slate-200/80 dark:bg-white/10 hover:bg-indigo-600 hover:text-white text-slate-500 dark:text-gray-400 font-extrabold text-xs flex items-center justify-center mx-auto transition-all"

@@ -97,6 +97,7 @@ export interface EmployeeItem {
   employeeId?: string;
   name: string;
   nickname?: string;
+  gender?: 'male' | 'female';
   level: string; // e.g. Lead Operations, Senior Specialist, Technician, NOC Engineer
   email: string;
   phone: string;

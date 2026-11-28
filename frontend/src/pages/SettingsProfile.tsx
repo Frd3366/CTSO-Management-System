@@ -43,8 +43,8 @@ export const SettingsProfile: React.FC = () => {
       showToast('Masukkan password saat ini.', 'error');
       return;
     }
-    if (newPassword.length < 6) {
-      showToast('Password baru minimal 6 karakter.', 'error');
+    if (newPassword.length < 8) {
+      showToast('Password baru minimal 8 karakter.', 'error');
       return;
     }
     if (newPassword !== confirmPassword) {
@@ -194,7 +194,8 @@ export const SettingsProfile: React.FC = () => {
                     type="password"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    placeholder="Minimal 6 karakter"
+                    minLength={8}
+                    placeholder="Minimal 8 karakter"
                     className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-black/20 text-xs text-slate-900 dark:text-white"
                     required
                   />

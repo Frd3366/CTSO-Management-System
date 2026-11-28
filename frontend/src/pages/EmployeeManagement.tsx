@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { Modal } from '../components/common/Modal';
 import { EmployeeItem, WorkLocation } from '../types';
+import { sortByEmployeeOrder, EmployeeSortMode } from '../utils/employeeSort';
 import {
   Users,
   Search,
@@ -42,6 +43,7 @@ export const EmployeeManagement: React.FC = () => {
   const [teamFilter, setTeamFilter] = useState('All');
   const [locationFilter, setLocationFilter] = useState<'All' | WorkLocation>('All');
   const [statusFilter, setStatusFilter] = useState<'All' | 'active' | 'inactive'>('All');
+  const [sortMode, setSortMode] = useState<EmployeeSortMode>('default');
 
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -54,6 +56,7 @@ export const EmployeeManagement: React.FC = () => {
   const [formEmployeeNo, setFormEmployeeNo] = useState('');
   const [formName, setFormName] = useState('');
   const [formNickname, setFormNickname] = useState('');
+  const [formGender, setFormGender] = useState<'male' | 'female'>('male');
   const [formLevel, setFormLevel] = useState<string>('Junior');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
@@ -68,7 +71,7 @@ export const EmployeeManagement: React.FC = () => {
   const canView = currentUser?.role === 'Admin' || currentUser?.role === 'SPV';
 
   const filteredEmployees = useMemo(() => {
-    return employees.filter((e) => {
+    const filtered = employees.filter((e) => {
       const matchSearch =
         (e.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (e.nickname || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -78,7 +81,8 @@ export const EmployeeManagement: React.FC = () => {
       const matchStatus = statusFilter === 'All' || e.status === statusFilter;
       return matchSearch && matchStatus;
     });
-  }, [employees, searchTerm, statusFilter]);
+    return sortByEmployeeOrder(filtered, (e) => e.name, sortMode);
+  }, [employees, searchTerm, statusFilter, sortMode]);
 
   const handleOpenAdd = () => {
     if (!isAdmin) {
@@ -89,6 +93,7 @@ export const EmployeeManagement: React.FC = () => {
     setFormEmployeeNo(`CTSO-${String(employees.length + 101).padStart(4, '0')}`);
     setFormName('');
     setFormNickname('');
+    setFormGender('male');
     setFormLevel('Junior');
     setFormEmail('');
     setFormPhone('');
@@ -109,6 +114,7 @@ export const EmployeeManagement: React.FC = () => {
     setFormEmployeeNo(emp.employeeNo);
     setFormName(emp.name);
     setFormNickname(emp.nickname || '');
+    setFormGender(emp.gender === 'female' ? 'female' : 'male');
     const validLevel = EMPLOYEE_LEVEL_OPTIONS.includes(emp.level as any) ? emp.level : 'Junior';
     setFormLevel(validLevel);
     setFormEmail(emp.email);
@@ -216,6 +222,7 @@ export const EmployeeManagement: React.FC = () => {
         employeeNo: cleanEmpNo,
         name: cleanName,
         nickname: cleanNickname,
+        gender: formGender,
         level: formLevel,
         email: cleanEmail,
         phone: formPhone,
@@ -249,6 +256,7 @@ export const EmployeeManagement: React.FC = () => {
         employeeNo: cleanEmpNo,
         name: cleanName,
         nickname: cleanNickname,
+        gender: formGender,
         level: formLevel,
         email: cleanEmail,
         phone: formPhone,
@@ -381,6 +389,18 @@ export const EmployeeManagement: React.FC = () => {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
+
+          {/* Sort Mode */}
+          <select
+            value={sortMode}
+            onChange={(e) => setSortMode(e.target.value as EmployeeSortMode)}
+            aria-label="Urutan karyawan"
+            className="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 text-xs text-slate-700 dark:text-gray-200 bg-white dark:bg-[#18181A] focus:outline-none"
+          >
+            <option value="default">Urutan Default CTSO</option>
+            <option value="az">Abjad (A → Z)</option>
+            <option value="za">Abjad (Z → A)</option>
+          </select>
         </div>
 
         <div className="text-xs text-slate-500 dark:text-gray-400">
@@ -397,6 +417,7 @@ export const EmployeeManagement: React.FC = () => {
                 <th className="py-3 px-4">Employee ID</th>
                 <th className="py-3 px-4">Nama Lengkap</th>
                 <th className="py-3 px-4">Nama Panggilan</th>
+                <th className="py-3 px-4">Gender</th>
                 <th className="py-3 px-4">Level</th>
                 <th className="py-3 px-4">Role Akun</th>
                 <th className="py-3 px-4">Kontak</th>
@@ -407,7 +428,7 @@ export const EmployeeManagement: React.FC = () => {
             <tbody className="divide-y divide-slate-100 dark:divide-white/5">
               {filteredEmployees.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 8 : 7} className="py-8 text-center text-slate-400 dark:text-gray-500">
+                  <td colSpan={isAdmin ? 9 : 8} className="py-8 text-center text-slate-400 dark:text-gray-500">
                     Tidak ada karyawan yang sesuai filter.
                   </td>
                 </tr>
@@ -422,6 +443,17 @@ export const EmployeeManagement: React.FC = () => {
                     </td>
                     <td className="py-3 px-4 text-slate-700 dark:text-gray-300 font-medium">
                       {emp.nickname?.trim() || <span className="text-slate-400 dark:text-gray-600">-</span>}
+                    </td>
+                    <td className="py-3 px-4">
+                      <span
+                        className={`inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold ${
+                          emp.gender === 'female'
+                            ? 'bg-pink-50 dark:bg-pink-950/40 text-pink-700 dark:text-pink-300 border border-pink-200/70 dark:border-pink-800/40'
+                            : 'bg-sky-50 dark:bg-sky-950/40 text-sky-700 dark:text-sky-300 border border-sky-200/70 dark:border-sky-800/40'
+                        }`}
+                      >
+                        {emp.gender === 'female' ? 'Perempuan' : 'Laki-laki'}
+                      </span>
                     </td>
                     <td className="py-3 px-4 text-slate-700 dark:text-gray-300 font-medium">
                       {emp.level || 'Junior'}
@@ -531,7 +563,7 @@ export const EmployeeManagement: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Nama Panggilan</label>
               <input
@@ -541,6 +573,17 @@ export const EmployeeManagement: React.FC = () => {
                 placeholder="cth: Putu"
                 className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/5 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-[#F9C900]"
               />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Gender</label>
+              <select
+                value={formGender}
+                onChange={(e) => setFormGender(e.target.value as 'male' | 'female')}
+                className="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#18181A] text-slate-900 dark:text-white text-xs font-semibold focus:outline-none focus:border-[#F9C900]"
+              >
+                <option value="male">Laki-laki</option>
+                <option value="female">Perempuan</option>
+              </select>
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-gray-300 mb-1">Level</label>

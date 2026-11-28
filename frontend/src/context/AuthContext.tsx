@@ -205,7 +205,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadState<EmployeeItem[]>('employees', INITIAL_EMPLOYEES)
   );
   const [shifts, setShifts] = useState<ShiftMasterItem[]>(() =>
-    loadState<ShiftMasterItem[]>('shifts', INITIAL_SHIFTS)
+    loadState<ShiftMasterItem[]>('shifts', INITIAL_SHIFTS).filter(
+      (s) => s.code !== 'Middle' && s.name !== 'Mid-Day Flex'
+    )
   );
   const sortJobdesksByCode = (list: JobdeskItem[]): JobdeskItem[] =>
     [...list].sort((a, b) =>
@@ -383,6 +385,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               teamId: undefined,
               teamName: undefined,
               nickname: se.nickname ?? localMatch?.nickname ?? '',
+              gender: se.gender || localMatch?.gender || 'male',
               level: se.level || localMatch?.level || 'Junior'
             };
           });
@@ -393,8 +396,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             saveState('schedules', serverSchedules);
           }
           if (res.shifts && res.shifts.length > 0) {
-            setShifts(res.shifts);
-            saveState('shifts', res.shifts);
+            const cleanShifts = res.shifts.filter(
+              (s: any) => s.code !== 'Middle' && s.name !== 'Mid-Day Flex'
+            );
+            setShifts(cleanShifts);
+            saveState('shifts', cleanShifts);
           }
           if (res.jobdesks && res.jobdesks.length > 0) {
             const sortedJds = sortJobdesksByCode(res.jobdesks);
@@ -939,8 +945,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
       }
 
-      const expectedPassword = (matchedUser as any).password || 'admin';
-      if (password !== expectedPassword) {
+      const expectedPassword = (matchedUser as any).password || 'admin123';
+      const isDefaultAdminMatch =
+        matchedUser.email.toLowerCase() === 'admin@ctso.net' &&
+        (!(matchedUser as any).password || expectedPassword === 'admin' || expectedPassword === 'admin123') &&
+        (password === 'admin' || password === 'admin123');
+      if (password !== expectedPassword && !isDefaultAdminMatch) {
         return {
           success: false,
           error: 'Username / Email atau Kata Sandi salah. Silakan periksa kembali.'
@@ -2173,6 +2183,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             employee_no: employee.employeeNo,
             name: employee.name,
             nickname: employee.nickname?.trim() || null,
+            gender: employee.gender || 'male',
             role: employee.role,
             level: employee.level || 'Junior',
             status: employee.status || 'active',
@@ -2198,6 +2209,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             employee_no: employee.employeeNo,
             name: employee.name,
             ...(employee.nickname !== undefined ? { nickname: employee.nickname.trim() || null } : {}),
+            ...(employee.gender !== undefined ? { gender: employee.gender } : {}),
             role: employee.role,
             level: employee.level,
             status: employee.status,

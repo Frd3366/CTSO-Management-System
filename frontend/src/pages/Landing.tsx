@@ -130,7 +130,7 @@ export const Landing: React.FC = () => {
         (a) => (a.location || employeeMap.get(a.employeeId)?.defaultLocation) === 'Denpasar'
       );
 
-      mainList = badung.slice(0, 11).map((a) => {
+      mainList = badung.slice(0, 14).map((a) => {
         const emp = employeeMap.get(a.employeeId);
         const jdCode = a.jobdeskCode || emp?.defaultJobdesk || 'OPS';
         const fullName = a.employeeName || emp?.name || 'Staff CTSO';
@@ -141,6 +141,7 @@ export const Landing: React.FC = () => {
           name: nickname || fullName,
           nickname,
           fullName,
+          gender: emp?.gender,
           role: emp?.level || 'Operations',
           shiftCode: a.shiftCode,
           shiftColor,
@@ -162,6 +163,7 @@ export const Landing: React.FC = () => {
           name: nickname || fullName,
           nickname,
           fullName,
+          gender: emp?.gender,
           role: emp?.level || 'Operations',
           shiftCode: a.shiftCode,
           shiftColor,
@@ -174,7 +176,7 @@ export const Landing: React.FC = () => {
     } else if (employees.length > 0) {
       modeLabel = 'DATA KARYAWAN CMS AKTIF';
       const activeEmps = employees.filter((e) => e.status === 'active');
-      const badungEmps = activeEmps.filter((e) => e.defaultLocation !== 'Denpasar').slice(0, 11);
+      const badungEmps = activeEmps.filter((e) => e.defaultLocation !== 'Denpasar').slice(0, 14);
       const denpasarEmps = activeEmps.filter((e) => e.defaultLocation === 'Denpasar').slice(0, 4);
 
       mainList = badungEmps.map((e) => ({
@@ -182,6 +184,7 @@ export const Landing: React.FC = () => {
         name: e.nickname?.trim() || e.name,
         nickname: e.nickname?.trim() || undefined,
         fullName: e.name,
+        gender: e.gender,
         role: e.level,
         shiftCode: 'On-Duty',
         shiftColor: '#22C55E',
@@ -196,6 +199,7 @@ export const Landing: React.FC = () => {
         name: e.nickname?.trim() || e.name,
         nickname: e.nickname?.trim() || undefined,
         fullName: e.name,
+        gender: e.gender,
         role: e.level,
         shiftCode: 'On-Duty',
         shiftColor: '#22C55E',

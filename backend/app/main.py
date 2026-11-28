@@ -16,6 +16,8 @@ try:
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;"))
         conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS level VARCHAR DEFAULT 'Junior';"))
         conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS nickname VARCHAR;"))
+        conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS gender VARCHAR DEFAULT 'male';"))
+        conn.execute(text("DELETE FROM shift_master WHERE code = 'Middle' OR name = 'Mid-Day Flex';"))
         conn.commit()
 except Exception:
     pass

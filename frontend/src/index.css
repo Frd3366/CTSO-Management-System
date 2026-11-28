@@ -184,6 +184,27 @@
   animation: scaleUp 150ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+@keyframes announcementMarquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-announcement-marquee {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  will-change: transform;
+  animation: announcementMarquee 22s linear infinite;
+}
+
+.group\/marquee:hover .animate-announcement-marquee {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

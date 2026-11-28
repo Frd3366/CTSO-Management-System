@@ -125,6 +125,9 @@ def register(req: UserCreate, db: Session = Depends(get_db)):
     if not clean_email or not clean_name:
         raise HTTPException(status_code=400, detail="Nama lengkap dan email wajib diisi.")
 
+    if not req.password or len(req.password) < 8:
+        raise HTTPException(status_code=400, detail="Kata sandi minimal 8 karakter.")
+
     # Check duplicate email in users and employees
     if db.query(UserModel).filter(func.lower(func.trim(UserModel.email)) == clean_email).first():
         raise HTTPException(status_code=400, detail="Email sudah terdaftar. Tidak boleh menggunakan email yang sama.")
@@ -247,6 +250,8 @@ def update_user_password(
     user = db.query(UserModel).filter(UserModel.id == user_id).first()
     if not user:
         raise HTTPException(status_code=404, detail="User tidak ditemukan.")
+    if not req.new_password or len(req.new_password) < 8:
+        raise HTTPException(status_code=400, detail="Kata sandi baru minimal 8 karakter.")
     user.password_hash = get_password_hash(req.new_password)
     db.commit()
     return {"success": True, "message": "Password berhasil diperbarui."}

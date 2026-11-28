@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { getShiftBadgeStyle, getJobdeskBadgeStyle, getContrastTextColor, isOffShiftCode } from '../utils/codeStyles';
 import { ModernDatePicker } from '../components/common/ModernDatePicker';
+import { sortByEmployeeOrder, EmployeeSortMode } from '../utils/employeeSort';
 
 export const Dashboard: React.FC = () => {
   const { employees, schedules, shifts, jobdesks, leaves, currentUser, deleteSchedule } = useAuth();
@@ -40,6 +41,7 @@ export const Dashboard: React.FC = () => {
   const [filterShift, setFilterShift] = useState<string>('all');
   const [filterJobdesk, setFilterJobdesk] = useState<string>('all');
   const [filterDutyStatus, setFilterDutyStatus] = useState<'all' | 'working' | 'off'>('all');
+  const [sortMode, setSortMode] = useState<EmployeeSortMode>('default');
 
   const [activeModalTitle, setActiveModalTitle] = useState<string | null>(null);
   const [modalAssignments, setModalAssignments] = useState<any[]>([]);
@@ -154,14 +156,11 @@ export const Dashboard: React.FC = () => {
 
     return targetJobdesks
       .map((jd) => {
-        const items = workingStaff
-          .filter((s) => s.jobdeskCode === jd.code)
-          .sort((a, b) =>
-            (a.employeeName || '').localeCompare(b.employeeName || '', undefined, {
-              numeric: true,
-              sensitivity: 'base'
-            })
-          );
+        const items = sortByEmployeeOrder(
+          workingStaff.filter((s) => s.jobdeskCode === jd.code),
+          (s) => s.employeeName || '',
+          sortMode
+        );
         return {
           code: jd.code,
           name: jd.name || jd.code,
@@ -225,7 +224,7 @@ export const Dashboard: React.FC = () => {
 
   // Filtered Roster Directory Table
   const filteredRoster = useMemo(() => {
-    return dayAssignments.filter((item) => {
+    const list = dayAssignments.filter((item) => {
       if (filterShift !== 'all' && item.shiftCode !== filterShift) return false;
       if (filterJobdesk !== 'all' && (item.jobdeskCode || 'UNASSIGNED') !== filterJobdesk) return false;
 
@@ -243,7 +242,8 @@ export const Dashboard: React.FC = () => {
       }
       return true;
     });
-  }, [dayAssignments, filterShift, filterJobdesk, filterDutyStatus, searchQuery, isOffShift]);
+    return sortByEmployeeOrder(list, (item) => item.employeeName || '', sortMode);
+  }, [dayAssignments, filterShift, filterJobdesk, filterDutyStatus, searchQuery, isOffShift, sortMode]);
 
   const getShiftHours = (shiftCode: string) => {
     if (isOffShift(shiftCode)) return 'OFF (Rest / Libur)';
@@ -486,10 +486,11 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {/* Main Content: Left (Jobdesk Kanban + Roster Directory) & Right (Shift Distribution) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-8 space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:items-stretch">
+        <div className="lg:col-span-8 lg:relative">
+          <div className="lg:absolute lg:inset-0 flex flex-col gap-6">
           {/* Section: Jobdesk Allocation Today */}
-          <div className="bg-white dark:bg-[#18181A] p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs space-y-5">
+          <div className="bg-white dark:bg-[#18181A] p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs space-y-5 shrink-0">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="text-sm font-black text-[#0F172A] dark:text-white tracking-tight flex items-center gap-2">
@@ -565,7 +566,7 @@ export const Dashboard: React.FC = () => {
 
                             {emp && (
                               <div className="text-[10px] text-current opacity-85 truncate">
-                                {emp.role || emp.level || 'CTSO Staff'} &bull; {emp.teamName || 'Ops'}
+                                {emp.role || emp.level || 'CTSO Staff'}
                               </div>
                             )}
 
@@ -590,9 +591,9 @@ export const Dashboard: React.FC = () => {
               </div>
           </div>
 
-          {/* Section: Personnel Roster Directory */}
-          <div className="bg-white dark:bg-[#18181A] p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs space-y-4">
-            <div>
+          {/* Section: Personnel Roster Directory (Bottom aligned with Shift Distribution, scrolls internally) */}
+          <div className="bg-white dark:bg-[#18181A] p-6 rounded-2xl border border-slate-200/80 dark:border-white/10 shadow-xs flex flex-col flex-1 min-h-[340px] lg:min-h-0 gap-4">
+            <div className="shrink-0">
               <h2 className="text-sm font-black text-[#0F172A] dark:text-white tracking-tight flex items-center gap-2">
                 <Users className="w-4 h-4 text-slate-700 dark:text-slate-300" aria-hidden="true" />
                 <span>Personnel Roster Directory</span>
@@ -603,7 +604,7 @@ export const Dashboard: React.FC = () => {
             </div>
 
             {/* Left-Aligned & Compact Filter Bar */}
-            <div className="flex flex-wrap items-center justify-start gap-2 pt-1">
+            <div className="flex flex-wrap items-center justify-start gap-2 pt-1 shrink-0">
               <div className="relative flex items-center">
                 <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 pointer-events-none z-10" aria-hidden="true" />
                 <input
@@ -658,12 +659,24 @@ export const Dashboard: React.FC = () => {
                 <option value="working">On Duty (Kerja)</option>
                 <option value="off">Off Day (Libur / Cuti)</option>
               </select>
+
+              {/* Urutan Nama */}
+              <select
+                aria-label="Urutan nama personel"
+                value={sortMode}
+                onChange={(e) => setSortMode(e.target.value as EmployeeSortMode)}
+                className="h-8 px-2.5 text-[11px] rounded-lg border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-gray-200 font-medium focus:outline-none"
+              >
+                <option value="default">Urutan Default</option>
+                <option value="az">Abjad (A → Z)</option>
+                <option value="za">Abjad (Z → A)</option>
+              </select>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto border border-slate-200/80 dark:border-white/10 rounded-xl">
+            {/* Table (Scrolls cleanly inside box aligned to Distribusi Shift) */}
+            <div className="flex-1 min-h-0 overflow-auto border border-slate-200/80 dark:border-white/10 rounded-xl">
               <table className="w-full text-left text-xs">
-                <thead className="bg-[#F8FAFC] dark:bg-white/5 text-slate-600 dark:text-gray-300 font-bold border-b border-slate-200/80 dark:border-white/10">
+                <thead className="sticky top-0 z-10 bg-[#F8FAFC] dark:bg-[#202023] text-slate-600 dark:text-gray-300 font-bold border-b border-slate-200/80 dark:border-white/10">
                   <tr>
                     <th className="py-3 px-4">Karyawan / ID</th>
                     <th className="py-3 px-4">Posisi</th>
@@ -756,6 +769,7 @@ export const Dashboard: React.FC = () => {
                 </tbody>
               </table>
             </div>
+          </div>
           </div>
         </div>
 

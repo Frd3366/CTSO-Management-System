@@ -248,7 +248,8 @@ export const INITIAL_USERS: User[] = [
     avatarText: 'AD',
     phone: '0812-0000-0001',
     createdAt: '2026-11-15T00:00:00Z',
-    lastLogin: 'Never'
+    lastLogin: 'Never',
+    password: 'admin123'
   }
 ];
 

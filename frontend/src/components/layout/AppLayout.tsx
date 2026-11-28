@@ -119,21 +119,23 @@ export const AppLayout: React.FC = () => {
 
         {activeAnnouncement && !dismissedBanner && (
           <div className="px-4 sm:px-6 lg:px-8 xl:px-10 pt-2 pb-0 animate-fade-in" role="region" aria-label="Pengumuman Operasional">
-            <div className="bg-amber-50 dark:bg-[#1E1A11] rounded-2xl border border-amber-300/90 dark:border-amber-500/35 shadow-xs px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
-              <div className="flex items-center gap-2.5 truncate flex-1 min-w-0">
-                <div className="w-7 h-7 rounded-xl bg-amber-600 text-white dark:bg-[#F9C900] dark:text-[#111111] flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="group/marquee bg-amber-50 dark:bg-[#1E1A11] rounded-2xl border border-amber-300/90 dark:border-amber-500/40 shadow-xs px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
+              <div className="flex items-center gap-2.5 flex-1 min-w-0 overflow-hidden">
+                <div className="w-7 h-7 rounded-xl bg-amber-600 text-white dark:bg-[#F9C900] dark:text-[#111111] flex items-center justify-center shrink-0 shadow-2xs animate-pulse">
                   <Megaphone className="w-3.5 h-3.5" aria-hidden="true" />
                 </div>
                 <span className="px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-wider bg-amber-200/90 dark:bg-[#F9C900]/20 text-amber-950 dark:text-[#F9C900] border border-amber-300/90 dark:border-[#F9C900]/30 shrink-0 font-mono">
                   Pengumuman
                 </span>
-                <div className="flex items-center gap-2 truncate text-xs">
-                  <span className="font-extrabold text-amber-950 dark:text-amber-100 shrink-0">
-                    {activeAnnouncement.title}:
-                  </span>
-                  <span className="text-amber-950 dark:text-amber-200 truncate font-medium">
-                    {activeAnnouncement.content}
-                  </span>
+                <div className="flex-1 min-w-0 overflow-hidden relative" title="Arahkan kursor untuk menjeda teks berjalan">
+                  <div className="animate-announcement-marquee gap-2 text-xs">
+                    <span className="font-extrabold text-amber-950 dark:text-amber-100">
+                      📢 {activeAnnouncement.title}:
+                    </span>
+                    <span className="text-amber-950 dark:text-amber-200 font-semibold">
+                      {activeAnnouncement.content}
+                    </span>
+                  </div>
                 </div>
               </div>
 

@@ -26,6 +26,8 @@ def init_database():
         conn.execute(text("ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login TIMESTAMP;"))
         conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS level VARCHAR DEFAULT 'Junior';"))
         conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS nickname VARCHAR;"))
+        conn.execute(text("ALTER TABLE employees ADD COLUMN IF NOT EXISTS gender VARCHAR DEFAULT 'male';"))
+        conn.execute(text("DELETE FROM shift_master WHERE code = 'Middle' OR name = 'Mid-Day Flex';"))
         conn.commit()
 
     db = SessionLocal()
@@ -54,7 +56,6 @@ def init_database():
             {"code": "Pagi 8", "name": "Regular Morning", "start_time": "08:00", "end_time": "16:00", "end_day_offset": 0, "color": "#0284C7", "is_off": False},
             {"code": "Siang", "name": "Afternoon Shift", "start_time": "13:00", "end_time": "21:00", "end_day_offset": 0, "color": "#16A34A", "is_off": False},
             {"code": "Sore", "name": "Evening Shift", "start_time": "15:00", "end_time": "23:00", "end_day_offset": 0, "color": "#EA580C", "is_off": False},
-            {"code": "Middle", "name": "Mid-Day Flex", "start_time": "10:00", "end_time": "18:00", "end_day_offset": 0, "color": "#D97706", "is_off": False},
             {"code": "Malam", "name": "Overnight Shift", "start_time": "23:00", "end_time": "07:00", "end_day_offset": 1, "color": "#7C3AED", "is_off": False},
             {"code": "OFF", "name": "Weekly Day Off", "start_time": "-", "end_time": "-", "end_day_offset": 0, "color": "#E11D48", "is_off": True},
         ]

@@ -27,6 +27,7 @@ class EmployeeCreate(BaseModel):
     employee_no: str
     name: str
     nickname: Optional[str] = None
+    gender: Optional[str] = "male"
     role: str = "Employee"
     level: Optional[str] = "Junior"
     status: str = "active"
@@ -38,6 +39,7 @@ class EmployeeUpdate(BaseModel):
     employee_no: Optional[str] = None
     name: Optional[str] = None
     nickname: Optional[str] = None
+    gender: Optional[str] = None
     role: Optional[str] = None
     level: Optional[str] = None
     status: Optional[str] = None

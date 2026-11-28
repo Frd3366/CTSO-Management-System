@@ -25,6 +25,7 @@ class EmployeeModel(Base):
     employee_no = Column(String, unique=True, index=True, nullable=False)
     name = Column(String, nullable=False)
     nickname = Column(String, nullable=True)
+    gender = Column(String, nullable=True, default="male")  # male, female
     role = Column(String, nullable=False, default="Employee")
     level = Column(String, nullable=True, default="Junior")
     status = Column(String, default="active")  # active, inactive

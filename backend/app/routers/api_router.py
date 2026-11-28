@@ -36,6 +36,7 @@ def get_employees(db: Session = Depends(get_db)):
             "employeeNo": e.employee_no,
             "name": e.name,
             "nickname": e.nickname or "",
+            "gender": e.gender or "male",
             "role": e.role,
             "level": e.level or "Junior",
             "status": e.status,
@@ -66,6 +67,7 @@ def create_employee(req: EmployeeCreate, db: Session = Depends(get_db)):
     data["employee_no"] = clean_no
     data["name"] = clean_name
     data["nickname"] = clean_nickname
+    data["gender"] = (req.gender or "male").strip().lower() if req.gender else "male"
     if clean_email:
         data["email"] = clean_email
     emp = EmployeeModel(**data)
@@ -575,6 +577,7 @@ def pull_all_data(db: Session = Depends(get_db)):
             "employeeNo": e.employee_no,
             "name": e.name,
             "nickname": e.nickname or "",
+            "gender": e.gender or "male",
             "role": e.role,
             "level": e.level or "Junior",
             "status": e.status,
@@ -690,6 +693,8 @@ def push_all_data(payload: dict, db: Session = Depends(get_db), current_user: Us
                 exist.name = emp_data.get("name", exist.name)
                 if "nickname" in emp_data:
                     exist.nickname = (emp_data.get("nickname") or "").strip() or None
+                if "gender" in emp_data and emp_data.get("gender"):
+                    exist.gender = (emp_data.get("gender") or "male").strip().lower()
                 exist.role = emp_data.get("role", exist.role)
                 if emp_data.get("level") is not None:
                     exist.level = emp_data.get("level")
@@ -703,6 +708,7 @@ def push_all_data(payload: dict, db: Session = Depends(get_db), current_user: Us
                     employee_no=emp_data.get("employeeNo", ""),
                     name=emp_data.get("name", ""),
                     nickname=(emp_data.get("nickname") or "").strip() or None,
+                    gender=(emp_data.get("gender") or "male").strip().lower(),
                     role=emp_data.get("role", "Employee"),
                     level=emp_data.get("level", "Junior"),
                     status=emp_data.get("status", "active"),
