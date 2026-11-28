@@ -93,7 +93,13 @@ export const Landing: React.FC = () => {
   const { mainRoster, studioRoster, tvStats } = useMemo(() => {
     const shiftByCode = new Map(shifts.map((s) => [s.code.toUpperCase(), s]));
     const jobdeskColorMap = new Map(jobdesks.map((j) => [j.code, j.color]));
-    const employeeMap = new Map(employees.map((e) => [e.id, e]));
+    const findEmp = (a: { employeeId?: string; employeeCode?: string; employeeName?: string }) =>
+      employees.find(
+        (e) =>
+          (a.employeeId && (e.id === a.employeeId || e.employeeNo === a.employeeId)) ||
+          (a.employeeCode && e.employeeNo === a.employeeCode) ||
+          (a.employeeName && e.name.trim().toLowerCase() === a.employeeName.trim().toLowerCase())
+      );
 
     // 1. Exact real-time on-duty assignments at current WITA hour
     const activeNowAssignments = schedules.filter((a) => {
@@ -124,14 +130,14 @@ export const Landing: React.FC = () => {
           : 'JADWAL SHIFT HARI INI';
 
       const badung = todayAssignments.filter(
-        (a) => (a.location || employeeMap.get(a.employeeId)?.defaultLocation) !== 'Denpasar'
+        (a) => (a.location || findEmp(a)?.defaultLocation) !== 'Denpasar'
       );
       const denpasar = todayAssignments.filter(
-        (a) => (a.location || employeeMap.get(a.employeeId)?.defaultLocation) === 'Denpasar'
+        (a) => (a.location || findEmp(a)?.defaultLocation) === 'Denpasar'
       );
 
       mainList = badung.slice(0, 14).map((a) => {
-        const emp = employeeMap.get(a.employeeId);
+        const emp = findEmp(a);
         const jdCode = a.jobdeskCode || emp?.defaultJobdesk || 'OPS';
         const fullName = a.employeeName || emp?.name || 'Staff CTSO';
         const nickname = emp?.nickname?.trim() || undefined;
@@ -153,7 +159,7 @@ export const Landing: React.FC = () => {
       });
 
       studioList = denpasar.slice(0, 4).map((a) => {
-        const emp = employeeMap.get(a.employeeId);
+        const emp = findEmp(a);
         const jdCode = a.jobdeskCode || emp?.defaultJobdesk || 'OPS';
         const fullName = a.employeeName || emp?.name || 'Staff CTSO';
         const nickname = emp?.nickname?.trim() || undefined;

@@ -44,6 +44,7 @@ interface Point {
 interface PixelDesk {
   id: number;
   pic?: string;
+  picAliases?: string[];
   isStool?: boolean;
   x: number;
   y: number;
@@ -105,20 +106,20 @@ const MAIN_H = 272;
 
 const MAIN_DESKS: PixelDesk[] = [
   // Top Row: PC 1..4 (facing up toward TV/windows) — Widek, Ima, Diah, Ayu
-  { id: 1, pic: 'widek', x: 64, y: 54, sitX: 64, sitY: 70, aisleX: 64, aisleY: 94, facing: 'up' },
-  { id: 2, pic: 'ima', x: 144, y: 54, sitX: 144, sitY: 70, aisleX: 144, aisleY: 94, facing: 'up' },
-  { id: 3, pic: 'diah', x: 224, y: 54, sitX: 224, sitY: 70, aisleX: 224, aisleY: 94, facing: 'up' },
-  { id: 4, pic: 'ayu', x: 304, y: 54, sitX: 304, sitY: 70, aisleX: 304, aisleY: 94, facing: 'up' },
+  { id: 1, pic: 'widek', picAliases: ['widek', 'dwi budayani', 'budayani'], x: 64, y: 54, sitX: 64, sitY: 70, aisleX: 64, aisleY: 94, facing: 'up' },
+  { id: 2, pic: 'ima', picAliases: ['ima', 'kharisma', 'pradnyawati'], x: 144, y: 54, sitX: 144, sitY: 70, aisleX: 144, aisleY: 94, facing: 'up' },
+  { id: 3, pic: 'diah', picAliases: ['diah', 'pusparini'], x: 224, y: 54, sitX: 224, sitY: 70, aisleX: 224, aisleY: 94, facing: 'up' },
+  { id: 4, pic: 'ayu', picAliases: ['ayu', 'juniartini'], x: 304, y: 54, sitX: 304, sitY: 70, aisleX: 304, aisleY: 94, facing: 'up' },
   // Middle Row: PC 5..7 (right below coffee cabinet, facing up) — Untung, Ferdi, Dimas
-  { id: 5, pic: 'untung', x: 148, y: 148, sitX: 148, sitY: 164, aisleX: 148, aisleY: 184, facing: 'up' },
-  { id: 6, pic: 'ferdi', x: 224, y: 148, sitX: 224, sitY: 164, aisleX: 224, aisleY: 184, facing: 'up' },
-  { id: 7, pic: 'dimas', x: 300, y: 148, sitX: 300, sitY: 164, aisleX: 300, aisleY: 184, facing: 'up' },
+  { id: 5, pic: 'untung', picAliases: ['untung', 'johar'], x: 148, y: 148, sitX: 148, sitY: 164, aisleX: 148, aisleY: 184, facing: 'up' },
+  { id: 6, pic: 'ferdi', picAliases: ['ferdi', 'wibowo'], x: 224, y: 148, sitX: 224, sitY: 164, aisleX: 224, aisleY: 184, facing: 'up' },
+  { id: 7, pic: 'dimas', picAliases: ['dimas', 'tonang'], x: 300, y: 148, sitX: 300, sitY: 164, aisleX: 300, aisleY: 184, facing: 'up' },
   // Bottom Row: PC 8..11 (facing down toward AC wall) — Hendry, Syarif, Ilda, Novi
-  { id: 8, pic: 'hendry', x: 64, y: 230, sitX: 64, sitY: 214, aisleX: 64, aisleY: 184, facing: 'down' },
-  { id: 9, pic: 'syarif', x: 144, y: 230, sitX: 144, sitY: 214, aisleX: 144, aisleY: 184, facing: 'down' },
-  { id: 10, pic: 'ilda', x: 224, y: 230, sitX: 224, sitY: 214, aisleX: 224, aisleY: 184, facing: 'down' },
-  { id: 11, pic: 'novi', x: 304, y: 230, sitX: 304, sitY: 214, aisleX: 304, aisleY: 184, facing: 'down' },
-  // Round Stools beside Water Dispenser (for Internship team when PCs are taken by other teams)
+  { id: 8, pic: 'hendry', picAliases: ['hendry', 'hendri', 'arivianto'], x: 64, y: 230, sitX: 64, sitY: 214, aisleX: 64, aisleY: 184, facing: 'down' },
+  { id: 9, pic: 'syarif', picAliases: ['syarif', 'firnanda'], x: 144, y: 230, sitX: 144, sitY: 214, aisleX: 144, aisleY: 184, facing: 'down' },
+  { id: 10, pic: 'ilda', picAliases: ['ilda', 'rohmawati'], x: 224, y: 230, sitX: 224, sitY: 214, aisleX: 224, aisleY: 184, facing: 'down' },
+  { id: 11, pic: 'novi', picAliases: ['novi', 'nopi', 'nopiani', 'sri nopiani'], x: 304, y: 230, sitX: 304, sitY: 214, aisleX: 304, aisleY: 184, facing: 'down' },
+  // Round Stools beside Water Dispenser (for Internship & Training team when all 11 PCs are full)
   { id: 12, isStool: true, x: 74, y: 118, sitX: 74, sitY: 118, aisleX: 50, aisleY: 118, facing: 'right' },
   { id: 13, isStool: true, x: 74, y: 138, sitX: 74, sitY: 138, aisleX: 50, aisleY: 138, facing: 'right' },
   { id: 14, isStool: true, x: 74, y: 158, sitX: 74, sitY: 158, aisleX: 50, aisleY: 158, facing: 'right' },
@@ -158,15 +159,27 @@ function assignMainDeskSlots(roster: OfficeAvatarData[]): Array<OfficeAvatarData
   const findPicDesk = (staff: OfficeAvatarData, exactNicknameOnly: boolean): number => {
     const nick = (staff.nickname || '').trim().toLowerCase();
     if (nick) {
-      const idx = pcIndices.find((i) => !slots[i] && MAIN_DESKS[i].pic === nick);
+      const idx = pcIndices.find(
+        (i) => !slots[i] && (MAIN_DESKS[i].pic === nick || MAIN_DESKS[i].picAliases?.includes(nick))
+      );
       if (idx !== undefined) return idx;
     }
     if (exactNicknameOnly) return -1;
-    const tokens = `${staff.nickname || ''} ${staff.fullName || ''} ${staff.name || ''}`
+    const combined = `${staff.nickname || ''} ${staff.fullName || ''} ${staff.name || ''}`
       .toLowerCase()
-      .split(/[^a-z0-9]+/)
-      .filter(Boolean);
-    const idx = pcIndices.find((i) => !slots[i] && MAIN_DESKS[i].pic && tokens.includes(MAIN_DESKS[i].pic!));
+      .replace(/\s+/g, ' ')
+      .trim();
+    const tokens = combined.split(/[^a-z0-9]+/).filter(Boolean);
+    const idx = pcIndices.find((i) => {
+      if (slots[i]) return false;
+      const d = MAIN_DESKS[i];
+      if (d.pic && tokens.includes(d.pic)) return true;
+      return Boolean(
+        d.picAliases?.some((alias) =>
+          alias.includes(' ') ? combined.includes(alias) : tokens.includes(alias)
+        )
+      );
+    });
     return idx !== undefined ? idx : -1;
   };
 
