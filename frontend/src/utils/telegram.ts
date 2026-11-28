@@ -46,23 +46,29 @@ export interface TelegramAlertData {
 }
 
 export const buildTelegramMessage = (data: TelegramAlertData): string => {
-  const hubLine = data.hub ? `\nLokasi : <code>${data.hub}</code>` : '';
+  // Build detail lines with Tanggal & Lokasi inside Detail Pengajuan
+  const detailLines: string[] = [];
+  if (data.date) {
+    detailLines.push(`• Tanggal : <code>${data.date}</code>`);
+  }
+  if (data.hub) {
+    detailLines.push(`• Lokasi : <code>${data.hub}</code>`);
+  }
 
-  // Format detail lines with bullet points
-  const formattedDetail = data.detail
+  data.detail
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean)
-    .map((line) => (line.startsWith('•') || line.startsWith('-') ? line : `• ${line}`))
-    .join('\n');
+    .forEach((line) => {
+      detailLines.push(line.startsWith('•') || line.startsWith('-') ? line : `• ${line}`);
+    });
+
+  const formattedDetail = detailLines.join('\n');
 
   return (
     `<b>Pengajuan Baru: ${data.jenis}</b>\n\n` +
     `Pemohon : <code>${data.nama}</code>\n` +
-    `Tanggal : <code>${data.date}</code>\n` +
-    `Diajukan: <code>${data.waktu}</code>` +
-    hubLine +
-    `\n\n` +
+    `Diajukan : <code>${data.waktu}</code>\n\n` +
     `<b>Detail Pengajuan:</b>\n` +
     `${formattedDetail}\n\n` +
     `Status: Menunggu Review Supervisor ⏳`

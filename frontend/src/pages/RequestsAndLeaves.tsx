@@ -12,6 +12,7 @@ import {
   sendTelegramAlert,
   TelegramConfig
 } from '../utils/telegram';
+import { sortByEmployeeOrder } from '../utils/employeeSort';
 import {
   ArrowLeftRight,
   CalendarOff,
@@ -383,11 +384,26 @@ export const RequestsAndLeaves: React.FC = () => {
             Requests & Leaves
           </h1>
           <p className="text-xs text-[#647084] dark:text-gray-400 mt-1">
-            Centralized hub for roster exchanges, shift changes, jobdesk assignments, and leave approvals.
+            Centralized hub for roster exchanges, shift changes, and leave approvals.
           </p>
         </div>
 
         <div className="flex items-center gap-2 flex-wrap">
+          {/* Telegram Alert Notification Button: Only for Admin/SPV */}
+          {isAdminOrSpv && (
+            <button
+              type="button"
+              onClick={() => setIsTelegramModalOpen(true)}
+              className="px-3.5 py-2 rounded-xl bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 text-slate-700 dark:text-gray-200 border border-slate-300 dark:border-white/15 text-xs font-bold flex items-center gap-2 transition-all shadow-2xs cursor-pointer"
+              title="Pengaturan Notifikasi Alert Telegram"
+            >
+              <Send className="w-3.5 h-3.5 text-slate-500 dark:text-gray-400" />
+              <span>Alert Telegram</span>
+              {telegramConfig.enabled && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white dark:ring-[#18181A]" title="Telegram Alert Aktif" />
+              )}
+            </button>
+          )}
 
           {activeSection === 'shifts' ? (
             <button
@@ -495,8 +511,7 @@ export const RequestsAndLeaves: React.FC = () => {
             {[
               { id: 'all', label: 'All Requests' },
               { id: 'Shift Exchange', label: 'Shift Exchange' },
-              { id: 'Change Shift', label: 'Change Shift' },
-              { id: 'Jobdesk Change', label: 'Jobdesk Change' }
+              { id: 'Change Shift', label: 'Change Shift' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -797,7 +812,7 @@ export const RequestsAndLeaves: React.FC = () => {
               <div>
                 <h3 className="text-base font-black text-[#111111] dark:text-white">New Shift / Roster Request</h3>
                 <p className="text-xs text-[#647084] dark:text-gray-400 mt-0.5">
-                  Submit a request for shift exchange, shift adjustment, or jobdesk role change.
+                  Submit a request for shift exchange or shift adjustment.
                 </p>
               </div>
               <button
@@ -813,11 +828,10 @@ export const RequestsAndLeaves: React.FC = () => {
             <form onSubmit={handleCreateShiftRequest} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-[#111111] dark:text-white mb-1">Request Type</label>
-                <div className="grid grid-cols-3 gap-1.5 text-xs">
+                <div className="grid grid-cols-2 gap-1.5 text-xs">
                   {[
                     { id: 'Shift Exchange' as RequestType, label: 'Shift Exchange' },
-                    { id: 'Change Shift' as RequestType, label: 'Change Shift' },
-                    { id: 'Jobdesk Change' as RequestType, label: 'Jobdesk Change' }
+                    { id: 'Change Shift' as RequestType, label: 'Change Shift' }
                   ].map((t) => (
                     <button
                       key={t.id}
@@ -854,13 +868,15 @@ export const RequestsAndLeaves: React.FC = () => {
                     required
                   >
                     <option value="">Select replacement employee...</option>
-                    {employees
-                      .filter((e) => e.id !== currentUser?.employeeId && e.status === 'active')
-                      .map((emp) => (
-                        <option key={emp.id} value={emp.id}>
-                          {emp.name} ({emp.employeeNo}) &bull; {emp.defaultLocation}
-                        </option>
-                      ))}
+                    {sortByEmployeeOrder(
+                      employees.filter((e) => e.id !== currentUser?.employeeId && e.status === 'active'),
+                      (e) => e.name,
+                      'default'
+                    ).map((emp) => (
+                      <option key={emp.id} value={emp.id}>
+                        {emp.name}
+                      </option>
+                    ))}
                   </select>
                 </div>
               )}
@@ -1147,19 +1163,21 @@ export const RequestsAndLeaves: React.FC = () => {
                     Clean
                   </span>
                 </div>
-                <div className="text-[11px] text-slate-700 dark:text-slate-200 space-y-1 leading-relaxed bg-white dark:bg-black/40 p-3 rounded-lg border border-slate-200/60 dark:border-white/5 font-mono">
-                  <p className="font-bold text-slate-900 dark:text-white">Pengajuan Baru: Tukar Shift (Swap)</p>
-                  <p className="mt-1">Pemohon : <code>I Putu Wijaya (CTSO-0101)</code></p>
-                  <p>Tanggal : <code>Rabu, 18/11/2026</code></p>
-                  <p>Diajukan: <code>{formatWitaNow()}</code></p>
-                  <p>Lokasi : <code>Badung Hub</code></p>
-                  <div className="pt-1.5 pb-1 border-t border-slate-100 dark:border-white/5 mt-1.5 space-y-0.5">
+                <div className="text-[11px] text-slate-700 dark:text-slate-200 leading-relaxed bg-white dark:bg-black/40 p-3 rounded-lg border border-slate-200/60 dark:border-white/5 font-mono">
+                  <p className="font-bold text-slate-900 dark:text-white mb-3">Pengajuan Baru: Tukar Shift (Swap)</p>
+                  <div className="space-y-0.5">
+                    <p>Pemohon : <code>I Putu Wijaya (CTSO-0101)</code></p>
+                    <p>Diajukan : <code>{formatWitaNow()}</code></p>
+                  </div>
+                  <div className="mt-3 pt-2 border-t border-slate-100 dark:border-white/5 space-y-0.5">
                     <p className="font-bold text-slate-800 dark:text-slate-100">Detail Pengajuan:</p>
+                    <p>• Tanggal : <code>Rabu, 18/11/2026</code></p>
+                    <p>• Lokasi : <code>Badung Hub</code></p>
                     <p>• Rekan Pengganti : Kadek Surya</p>
                     <p>• Perubahan Shift : Pagi 7 (07:00) ➔ Siang (13:00)</p>
                     <p>• Keterangan : Keperluan keluarga mendesak</p>
                   </div>
-                  <p className="text-[11px] text-slate-600 dark:text-slate-300 pt-1">Status: Menunggu Review Supervisor ⏳</p>
+                  <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-3">Status: Menunggu Review Supervisor ⏳</p>
                 </div>
               </div>
 
