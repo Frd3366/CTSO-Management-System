@@ -411,6 +411,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setAnnouncements(res.announcements);
             saveState('announcements', res.announcements);
           }
+          if (Array.isArray(res.requests)) {
+            setRequests(res.requests);
+            saveState('requests', res.requests);
+          }
+          if (Array.isArray(res.leaves)) {
+            setLeaves(res.leaves);
+            saveState('leaves', res.leaves);
+          }
+          if (Array.isArray(res.activityLogs) && res.activityLogs.length > 0) {
+            setActivityLogs(res.activityLogs);
+            saveState('activity_logs', res.activityLogs);
+          }
         }
         // Case 2: Server database is clean/empty, but current browser has local data -> auto-seed server PostgreSQL!
         else if (localEmps.length > 0 || localSchedules.length > 0) {
@@ -524,6 +536,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         timestamp: now
       };
       setActivityLogs((prev) => [newLog, ...prev].slice(0, 100));
+
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.post('/activity-logs', {
+            id: newLog.id,
+            user_name: newLog.actorName,
+            user_role: newLog.actorRole,
+            action: newLog.action,
+            details: newLog.description,
+            ip_address: newLog.ipAddress
+          }).catch((e) => console.warn('Failed to persist activity log', e));
+        }
+      });
     },
     [currentUser, getNowWITAString]
   );
@@ -1472,6 +1497,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
       setRequests((prev) => [newReq, ...prev]);
 
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.post('/requests', {
+            id: newReq.id,
+            request_type: newReq.requestType,
+            requester_employee_id: newReq.requesterEmployeeId,
+            requester_name: newReq.requesterName,
+            replacement_employee_id: newReq.replacementEmployeeId || null,
+            replacement_name: newReq.replacementName || null,
+            work_date: newReq.workDate,
+            requested_shift: newReq.requestedShift || null,
+            requested_jobdesk: newReq.requestedJobdesk || null,
+            reason: newReq.reason,
+            status: newReq.status
+          }).catch((e) => console.warn('Failed to persist request to backend', e));
+        }
+      });
+
       addActivityLog(
         'CREATE_REQUEST',
         'request',
@@ -1518,6 +1561,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return r;
         })
       );
+
+      const nextConsentStatus = consent === 'Accepted' ? 'Pending Approval' : 'Rejected';
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.put(`/requests/${requestId}/status`, { status: nextConsentStatus })
+            .catch((e) => console.warn('Failed to update request consent on backend', e));
+        }
+      });
 
       const target = requests.find((r) => r.id === requestId);
       addActivityLog(
@@ -1725,6 +1776,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         '/schedule'
       );
 
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.put(`/requests/${requestId}/status`, { status: 'Approved' })
+            .catch((e) => console.warn('Failed to approve request on backend', e));
+        }
+      });
+
       return { success: true, message: 'Request berhasil disetujui dan langsung diterapkan pada halaman schedule & jobdesk.' };
     },
     [requests, schedules, employees, getNowWITAString, currentUser, updateSchedule, addSchedule, addActivityLog, pushNotification]
@@ -1745,6 +1803,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : r
         )
       );
+
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.put(`/requests/${requestId}/status`, { status: 'Rejected' })
+            .catch((e) => console.warn('Failed to reject request on backend', e));
+        }
+      });
 
       const target = requests.find((r) => r.id === requestId);
       addActivityLog(
@@ -1773,6 +1838,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setRequests((prev) =>
         prev.map((r) => (r.id === requestId ? { ...r, status: 'Cancelled' } : r))
       );
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.put(`/requests/${requestId}/status`, { status: 'Cancelled' })
+            .catch((e) => console.warn('Failed to cancel request on backend', e));
+        }
+      });
       addActivityLog('CANCEL_REQUEST', 'request', `Membatalkan permohonan request #${requestId}`, requestId);
     },
     [addActivityLog]
@@ -1788,6 +1859,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         createdAt: getNowWITAString()
       };
       setLeaves((prev) => [newLeave, ...prev]);
+
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.post('/leaves', {
+            id: newLeave.id,
+            employee_id: newLeave.employeeId,
+            employee_name: newLeave.employeeName,
+            type: newLeave.type,
+            start_date: newLeave.startDate,
+            end_date: newLeave.endDate,
+            reason: newLeave.reason,
+            status: newLeave.status
+          }).catch((e) => console.warn('Failed to persist leave to backend', e));
+        }
+      });
 
       addActivityLog(
         'CREATE_LEAVE',
@@ -1821,6 +1907,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : l
         )
       );
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.put(`/leaves/${leaveId}/status`, { status: 'Approved' })
+            .catch((e) => console.warn('Failed to approve leave on backend', e));
+        }
+      });
 
       // Generate all dates in the range [startDate, endDate]
       const leaveDates: string[] = [];
@@ -1935,6 +2027,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             : l
         )
       );
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.put(`/leaves/${leaveId}/status`, { status: 'Rejected' })
+            .catch((e) => console.warn('Failed to reject leave on backend', e));
+        }
+      });
       addActivityLog('REJECT_LEAVE', 'leave', `Menolak cuti #${leaveId}`, leaveId);
     },
     [leaves, employees, currentUser, getNowWITAString, addActivityLog]
@@ -1961,6 +2059,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setLeaves((prev) =>
         prev.map((l) => (l.id === leaveId ? { ...l, status: 'Cancelled' } : l))
       );
+      apiClient.isBackendAvailable().then((isUp) => {
+        if (isUp) {
+          apiClient.put(`/leaves/${leaveId}/status`, { status: 'Cancelled' })
+            .catch((e) => console.warn('Failed to cancel leave on backend', e));
+        }
+      });
       addActivityLog('CANCEL_LEAVE', 'leave', `Membatalkan pengajuan cuti #${leaveId}`, leaveId);
     },
     [leaves, employees, addActivityLog]

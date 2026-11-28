@@ -387,22 +387,22 @@ def get_requests(db: Session = Depends(get_db)):
 
 @router.post("/requests")
 def create_request(req: RosterRequestCreate, db: Session = Depends(get_db)):
-    r = RosterRequestModel(**req.dict())
-    if r.request_type == "Shift Exchange" and r.replacement_employee_id:
-        r.status = "Pending Replacement"
-    else:
-        r.status = "Pending Approval"
+    data = {k: v for k, v in req.dict().items() if v is not None}
+    if not data.get("status"):
+        data["status"] = "Pending Approval"
+    r = RosterRequestModel(**data)
     db.add(r)
     db.commit()
     db.refresh(r)
     return {"success": True, "data": r}
 
 @router.put("/requests/{req_id}/status")
-def update_request_status(req_id: str, status: str, db: Session = Depends(get_db)):
+def update_request_status(req_id: str, payload: dict = None, status: str = None, db: Session = Depends(get_db)):
     r = db.query(RosterRequestModel).filter(RosterRequestModel.id == req_id).first()
     if not r:
         raise HTTPException(status_code=404, detail="Request tidak ditemukan.")
-    r.status = status
+    next_status = (payload or {}).get("status") if isinstance(payload, dict) else None
+    r.status = next_status or status or r.status
     db.commit()
     return {"success": True}
 
@@ -429,18 +429,20 @@ def get_leaves(db: Session = Depends(get_db)):
 
 @router.post("/leaves")
 def create_leave(req: LeaveCreate, db: Session = Depends(get_db)):
-    l = LeaveModel(**req.dict())
+    data = {k: v for k, v in req.dict().items() if v is not None}
+    l = LeaveModel(**data)
     db.add(l)
     db.commit()
     db.refresh(l)
     return {"success": True, "data": l}
 
 @router.put("/leaves/{leave_id}/status")
-def update_leave_status(leave_id: str, status: str, db: Session = Depends(get_db)):
+def update_leave_status(leave_id: str, payload: dict = None, status: str = None, db: Session = Depends(get_db)):
     l = db.query(LeaveModel).filter(LeaveModel.id == leave_id).first()
     if not l:
         raise HTTPException(status_code=404, detail="Leave tidak ditemukan.")
-    l.status = status
+    next_status = (payload or {}).get("status") if isinstance(payload, dict) else None
+    l.status = next_status or status or l.status
     db.commit()
     return {"success": True}
 
@@ -501,7 +503,8 @@ def get_activity_logs(db: Session = Depends(get_db)):
 
 @router.post("/activity-logs")
 def create_activity_log(req: ActivityLogCreate, db: Session = Depends(get_db)):
-    log = ActivityLogModel(**req.dict())
+    data = {k: v for k, v in req.dict().items() if v is not None}
+    log = ActivityLogModel(**data)
     db.add(log)
     db.commit()
     return {"success": True}
@@ -643,6 +646,54 @@ def pull_all_data(db: Session = Depends(get_db)):
         for a in db.query(AnnouncementModel).all()
     ]
     holidays = {h.date: h.name for h in db.query(HolidayModel).all()}
+    requests_list = [
+        {
+            "id": r.id,
+            "requestType": r.request_type,
+            "requesterEmployeeId": r.requester_employee_id,
+            "requesterName": r.requester_name,
+            "replacementEmployeeId": r.replacement_employee_id,
+            "replacementName": r.replacement_name,
+            "workDate": r.work_date,
+            "requestedShift": r.requested_shift,
+            "requestedJobdesk": r.requested_jobdesk,
+            "reason": r.reason,
+            "status": r.status,
+            "replacementConsentStatus": "Accepted" if r.request_type == "Shift Exchange" else "None",
+            "createdAt": r.created_at.isoformat() if r.created_at else None
+        }
+        for r in db.query(RosterRequestModel).order_by(RosterRequestModel.created_at.desc()).all()
+    ]
+    leaves_list = [
+        {
+            "id": l.id,
+            "employeeId": l.employee_id,
+            "employeeName": l.employee_name,
+            "type": l.type,
+            "startDate": l.start_date,
+            "endDate": l.end_date,
+            "reason": l.reason,
+            "status": l.status,
+            "createdAt": l.created_at.isoformat() if l.created_at else None
+        }
+        for l in db.query(LeaveModel).order_by(LeaveModel.created_at.desc()).all()
+    ]
+    activity_logs = [
+        {
+            "id": log.id,
+            "actorUserId": "srv",
+            "actorName": log.user_name,
+            "actorRole": log.user_role,
+            "action": log.action,
+            "entityType": "system",
+            "description": log.details,
+            "ipAddress": log.ip_address or "127.0.0.1",
+            "status": "Success",
+            "createdAt": log.timestamp.isoformat() if log.timestamp else "",
+            "timestamp": int(log.timestamp.timestamp() * 1000) if log.timestamp else 0
+        }
+        for log in db.query(ActivityLogModel).order_by(ActivityLogModel.timestamp.desc()).limit(100).all()
+    ]
 
     return {
         "success": True,
@@ -652,7 +703,10 @@ def pull_all_data(db: Session = Depends(get_db)):
         "jobdesks": jobdesks,
         "schedules": schedules,
         "announcements": announcements,
-        "holidays": holidays
+        "holidays": holidays,
+        "requests": requests_list,
+        "leaves": leaves_list,
+        "activityLogs": activity_logs
     }
 
 @router.post("/sync/push")

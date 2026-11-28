@@ -118,6 +118,7 @@ class BulkScheduleCreate(BaseModel):
 
 # Roster Request
 class RosterRequestCreate(BaseModel):
+    id: Optional[str] = None
     request_type: str
     requester_employee_id: str
     requester_name: str
@@ -127,15 +128,18 @@ class RosterRequestCreate(BaseModel):
     requested_shift: Optional[str] = None
     requested_jobdesk: Optional[str] = None
     reason: str
+    status: Optional[str] = None
 
 # Leave Record
 class LeaveCreate(BaseModel):
+    id: Optional[str] = None
     employee_id: str
     employee_name: str
     type: str
     start_date: str
     end_date: str
     reason: str
+    status: Optional[str] = "Pending"
 
 # Announcement
 class AnnouncementCreate(BaseModel):
@@ -147,6 +151,7 @@ class AnnouncementCreate(BaseModel):
 
 # Activity Log
 class ActivityLogCreate(BaseModel):
+    id: Optional[str] = None
     user_name: str
     user_role: str
     action: str
