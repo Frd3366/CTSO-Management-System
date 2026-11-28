@@ -31,19 +31,7 @@ export const AppLayout: React.FC = () => {
   }, []);
 
   const publishedAnnouncements = announcements.filter((a) => a.status === 'Published');
-  const [announcementIndex, setAnnouncementIndex] = useState(0);
-
-  useEffect(() => {
-    if (publishedAnnouncements.length <= 1) return;
-
-    const interval = setInterval(() => {
-      setAnnouncementIndex((prev) => (prev + 1) % publishedAnnouncements.length);
-    }, 5 * 60 * 1000);
-
-    return () => clearInterval(interval);
-  }, [publishedAnnouncements.length]);
-
-  const activeAnnouncement = publishedAnnouncements[announcementIndex % (publishedAnnouncements.length || 1)];
+  const marqueeDurationSec = Math.max(18, publishedAnnouncements.length * 16);
 
   const getPageTitle = () => {
     const p = location.pathname;
@@ -117,7 +105,7 @@ export const AppLayout: React.FC = () => {
           <div className="w-8" aria-hidden="true" />
         </header>
 
-        {activeAnnouncement && !dismissedBanner && (
+        {publishedAnnouncements.length > 0 && !dismissedBanner && (
           <div className="px-4 sm:px-6 lg:px-8 xl:px-10 pt-2 pb-0 animate-fade-in" role="region" aria-label="Pengumuman Operasional">
             <div className="group/marquee bg-amber-50 dark:bg-[#1E1A11] rounded-2xl border border-amber-300/90 dark:border-amber-500/40 shadow-xs px-4 py-2.5 flex items-center justify-between gap-3 text-xs">
               <div className="flex items-center gap-2.5 flex-1 min-w-0 overflow-hidden">
@@ -128,34 +116,30 @@ export const AppLayout: React.FC = () => {
                   Pengumuman
                 </span>
                 <div className="flex-1 min-w-0 overflow-hidden relative" title="Arahkan kursor untuk menjeda teks berjalan">
-                  <div className="animate-announcement-marquee gap-2 text-xs">
-                    <span className="font-extrabold text-amber-950 dark:text-amber-100">
-                      📢 {activeAnnouncement.title}:
-                    </span>
-                    <span className="text-amber-950 dark:text-amber-200 font-semibold">
-                      {activeAnnouncement.content}
-                    </span>
+                  <div
+                    className="animate-announcement-marquee text-xs"
+                    style={{ ['--marquee-duration' as any]: `${marqueeDurationSec}s` }}
+                  >
+                    {publishedAnnouncements.map((ann, idx) => (
+                      <span key={ann.id} className="inline-flex items-center gap-2">
+                        {idx > 0 && (
+                          <span className="mx-14 inline-flex items-center text-amber-500/70 dark:text-[#F9C900]/50 font-black">
+                            •••
+                          </span>
+                        )}
+                        <span className="font-extrabold text-amber-950 dark:text-amber-100">
+                          📢 {ann.title}:
+                        </span>
+                        <span className="text-amber-950 dark:text-amber-200 font-semibold">
+                          {ann.content}
+                        </span>
+                      </span>
+                    ))}
                   </div>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 shrink-0">
-                {publishedAnnouncements.length > 1 && (
-                  <div className="flex items-center gap-1 font-mono text-[11px] text-amber-950 dark:text-amber-200 bg-amber-200/70 dark:bg-amber-400/15 border border-amber-300/80 dark:border-amber-400/30 px-2 py-0.5 rounded-lg">
-                    <span>
-                      {((announcementIndex % publishedAnnouncements.length) + 1)}/{publishedAnnouncements.length}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => setAnnouncementIndex((prev) => (prev + 1) % publishedAnnouncements.length)}
-                      className="p-0.5 rounded hover:bg-amber-300/50 dark:hover:bg-amber-400/20 text-xs text-amber-950 dark:text-amber-100 font-bold"
-                      aria-label="Pengumuman berikutnya"
-                      title="Pengumuman berikutnya"
-                    >
-                      &rarr;
-                    </button>
-                  </div>
-                )}
                 <button
                   type="button"
                   onClick={() => setDismissedBanner(true)}

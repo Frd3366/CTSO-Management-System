@@ -886,7 +886,7 @@ export const ShiftSchedule: React.FC = () => {
                                     : ''
                                 }`}
                               >
-                                <div className="font-mono font-black text-xs text-center w-full leading-tight flex items-center justify-center gap-1">
+                                <div className="font-mono font-black text-[9px] text-center w-full leading-tight flex items-center justify-center gap-1">
                                   <span>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</span>
                                   {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -905,7 +905,7 @@ export const ShiftSchedule: React.FC = () => {
                                     : ''
                                 }`}
                               >
-                                <div className="font-mono font-black text-xs text-center w-full uppercase tracking-tight leading-tight flex items-center justify-center gap-1">
+                                <div className="font-mono font-black text-[10px] text-center w-full uppercase tracking-tight leading-tight flex items-center justify-center gap-1">
                                   <span>{assignment.shiftCode}</span>
                                   {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -913,10 +913,10 @@ export const ShiftSchedule: React.FC = () => {
                                     </span>
                                   )}
                                 </div>
-                                <div className="text-[9.5px] font-mono font-bold text-center mt-0.5 opacity-90 leading-tight">
+                                <div className="text-[8.5px] font-mono font-bold text-center mt-0.5 opacity-90 leading-tight">
                                   {getShiftHours(assignment.shiftCode)}
                                 </div>
-                                <div className="text-[8.5px] font-semibold text-center mt-0.5 opacity-75 truncate max-w-full leading-tight">
+                                <div className="text-[8px] font-semibold text-center mt-0.5 opacity-75 truncate max-w-full leading-tight">
                                   {assignment.location || 'Badung'}
                                 </div>
                               </div>
@@ -928,7 +928,7 @@ export const ShiftSchedule: React.FC = () => {
                               }`}
                               title={holidayName ? `Libur Nasional: ${holidayName} (Klik untuk ubah)` : 'Hari Minggu — Weekly Day Off otomatis (Klik untuk ubah)'}
                             >
-                              <div className="font-mono font-black text-xs text-center w-full leading-tight">
+                              <div className="font-mono font-black text-[9px] text-center w-full leading-tight">
                                 WEEKLY DAY OFF
                               </div>
                             </div>
@@ -1059,7 +1059,7 @@ export const ShiftSchedule: React.FC = () => {
                                     : ''
                                 }`}
                               >
-                                <div className="font-mono font-black text-xs text-center w-full leading-tight flex items-center justify-center gap-1">
+                                <div className="font-mono font-black text-[9px] text-center w-full leading-tight flex items-center justify-center gap-1">
                                   <span>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</span>
                                   {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -1078,7 +1078,7 @@ export const ShiftSchedule: React.FC = () => {
                                     : ''
                                 }`}
                               >
-                                <div className="font-mono font-black text-xs text-center w-full uppercase tracking-tight leading-tight flex items-center justify-center gap-1">
+                                <div className="font-mono font-black text-[10px] text-center w-full uppercase tracking-tight leading-tight flex items-center justify-center gap-1">
                                   <span>{assignment.shiftCode}</span>
                                   {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -1091,10 +1091,10 @@ export const ShiftSchedule: React.FC = () => {
                                     {assignment.jobdeskCode}
                                   </span>
                                 )}
-                                <div className="text-[9.5px] font-mono font-bold text-center mt-0.5 opacity-90 leading-tight">
+                                <div className="text-[8.5px] font-mono font-bold text-center mt-0.5 opacity-90 leading-tight">
                                   {getShiftHours(assignment.shiftCode)}
                                 </div>
-                                <div className="text-[8.5px] font-semibold text-center mt-0.5 opacity-75 truncate max-w-full leading-tight">
+                                <div className="text-[8px] font-semibold text-center mt-0.5 opacity-75 truncate max-w-full leading-tight">
                                   {assignment.location || 'Badung'}
                                 </div>
                               </div>
@@ -1106,7 +1106,7 @@ export const ShiftSchedule: React.FC = () => {
                               }`}
                               title={hasHoliday ? `Libur Nasional: ${holidays[d.iso]} (Klik untuk ubah)` : 'Hari Minggu — Weekly Day Off otomatis (Klik untuk ubah)'}
                             >
-                              <div className="font-mono font-black text-xs text-center w-full leading-tight">
+                              <div className="font-mono font-black text-[9px] text-center w-full leading-tight">
                                 WEEKLY DAY OFF
                               </div>
                             </div>

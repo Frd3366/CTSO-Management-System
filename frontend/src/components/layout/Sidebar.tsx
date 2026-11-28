@@ -138,14 +138,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const allManagementItems = [
-    { label: 'Employees', path: '/management/employees', icon: Users, roles: ['Admin', 'SPV'] },
-    { label: 'User Accounts', path: '/management/users', icon: UserCog, roles: ['Admin'] },
+    { label: 'Announcements', path: '/management/announcements', icon: Megaphone, roles: ['Admin', 'SPV'] },
     { label: 'Schedule Master', path: '/management/shift-master', icon: Clock, roles: ['Admin', 'SPV'] },
     { label: 'Jobdesk Master', path: '/management/jobdesk-master', icon: Layers, roles: ['Admin', 'SPV'] },
+    { label: 'Employees', path: '/management/employees', icon: Users, roles: ['Admin', 'SPV'] },
+    { label: 'User Accounts', path: '/management/users', icon: UserCog, roles: ['Admin'] },
     { label: 'Role & Permissions', path: '/management/permissions', icon: ShieldCheck, roles: ['Admin'] },
-    { label: 'Announcements', path: '/management/announcements', icon: Megaphone, roles: ['Admin', 'SPV'] },
-    { label: 'Activity Logs', path: '/management/activity-logs', icon: History, roles: ['Admin', 'SPV'] },
     { label: 'Schedule History', path: '/management/schedule-history', icon: FileSpreadsheet, roles: ['Admin', 'SPV'] },
+    { label: 'Activity Logs', path: '/management/activity-logs', icon: History, roles: ['Admin', 'SPV'] },
   ];
 
   const visibleManagementItems = allManagementItems.filter((item) =>

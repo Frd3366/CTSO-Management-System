@@ -147,11 +147,13 @@ function assignMainDeskSlots(roster: OfficeAvatarData[]): Array<OfficeAvatarData
   const pcIndices = MAIN_DESKS.map((d, i) => (!d.isStool ? i : -1)).filter((i) => i >= 0);
   const stoolIndices = MAIN_DESKS.map((d, i) => (d.isStool ? i : -1)).filter((i) => i >= 0);
 
-  const isInternship = (staff: OfficeAvatarData) =>
-    (staff.role || '').toLowerCase().includes('inter');
+  const isInternOrTraining = (staff: OfficeAvatarData) => {
+    const r = (staff.role || '').toLowerCase();
+    return r.includes('inter') || r.includes('train');
+  };
 
-  const regularStaff = roster.filter((s) => !isInternship(s));
-  const internStaff = roster.filter((s) => isInternship(s));
+  const regularStaff = roster.filter((s) => !isInternOrTraining(s));
+  const internOrTrainingStaff = roster.filter((s) => isInternOrTraining(s));
 
   const findPicDesk = (staff: OfficeAvatarData, exactNicknameOnly: boolean): number => {
     const nick = (staff.nickname || '').trim().toLowerCase();
@@ -168,7 +170,7 @@ function assignMainDeskSlots(roster: OfficeAvatarData[]): Array<OfficeAvatarData
     return idx !== undefined ? idx : -1;
   };
 
-  // 1. Regular staff get PC desks first: exact nickname PIC match -> word match -> remaining empty PCs
+  // 1. Non-Internship/Training staff ALWAYS get priority on the 11 PC desks (never sit on round stools)
   const afterPass1: OfficeAvatarData[] = [];
   for (const staff of regularStaff) {
     const deskIdx = findPicDesk(staff, true);
@@ -187,20 +189,17 @@ function assignMainDeskSlots(roster: OfficeAvatarData[]): Array<OfficeAvatarData
     const freePc = pcIndices.find((i) => slots[i] === null);
     if (freePc !== undefined) {
       slots[freePc] = staff;
-    } else {
-      const freeStool = stoolIndices.find((i) => slots[i] === null);
-      if (freeStool !== undefined) slots[freeStool] = staff;
     }
   }
 
-  // 2. Internship team sits on round stools beside the water dispenser (or free PC if stools are full)
-  for (const staff of internStaff) {
-    const freeStool = stoolIndices.find((i) => slots[i] === null);
-    if (freeStool !== undefined) {
-      slots[freeStool] = staff;
+  // 2. Internship & Training staff: can use any empty PC desk if available; if all 11 PCs are full, sit on round stools beside dispenser
+  for (const staff of internOrTrainingStaff) {
+    const freePc = pcIndices.find((i) => slots[i] === null);
+    if (freePc !== undefined) {
+      slots[freePc] = staff;
     } else {
-      const freePc = pcIndices.find((i) => slots[i] === null);
-      if (freePc !== undefined) slots[freePc] = staff;
+      const freeStool = stoolIndices.find((i) => slots[i] === null);
+      if (freeStool !== undefined) slots[freeStool] = staff;
     }
   }
 

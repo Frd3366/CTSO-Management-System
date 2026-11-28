@@ -186,19 +186,22 @@
 
 @keyframes announcementMarquee {
   0% {
-    transform: translateX(100%);
+    left: 100%;
+    transform: translateX(0);
   }
   100% {
+    left: 0%;
     transform: translateX(-100%);
   }
 }
 
 .animate-announcement-marquee {
+  position: relative;
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  will-change: transform;
-  animation: announcementMarquee 22s linear infinite;
+  will-change: transform, left;
+  animation: announcementMarquee var(--marquee-duration, 20s) linear infinite;
 }
 
 .group\/marquee:hover .animate-announcement-marquee {

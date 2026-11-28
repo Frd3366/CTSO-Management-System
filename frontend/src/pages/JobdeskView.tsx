@@ -750,15 +750,15 @@ export const JobdeskView: React.FC = () => {
                         title={canManageJobdesk ? "Klik untuk ubah jobdesk" : "Klik untuk melihat detail & catatan"}
                       >
                         <div className="flex items-center justify-between">
-                          <span className="text-xs font-extrabold text-current truncate">
+                          <span className="text-xs font-extrabold text-white truncate">
                             {item.employeeName}
                           </span>
-                          <span className="text-[10px] font-mono text-current opacity-80 shrink-0 ml-2">
+                          <span className="text-[10px] font-mono text-white/85 shrink-0 ml-2">
                             {item.employeeCode}
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-3 items-center gap-1 text-[11px] pt-1.5 border-t border-current/15">
+                        <div className="grid grid-cols-3 items-center gap-1 text-[11px] pt-1.5 border-t border-white/25">
                           <div className="justify-self-start">
                             <span className={`px-2 py-0.5 rounded-md text-[10px] font-bold font-mono ${getShiftBadgeStyle(item.shiftCode).badge}`}>
                               {item.shiftCode}
@@ -775,8 +775,8 @@ export const JobdeskView: React.FC = () => {
                           </div>
 
                           <div className="justify-self-end flex items-center gap-1 min-w-0">
-                            <span className="inline-flex items-center gap-1 text-current opacity-85 text-[10px] font-medium font-mono truncate">
-                              <MapPin className="w-3 h-3 text-current opacity-75 shrink-0" aria-hidden="true" />
+                            <span className="inline-flex items-center gap-1 text-white/95 text-[10px] font-medium font-mono truncate">
+                              <MapPin className="w-3 h-3 text-white/85 shrink-0" aria-hidden="true" />
                               <span className="truncate">
                                 {item.location ||
                                   employees.find((e) => e.id === item.employeeId || e.employeeNo === item.employeeCode)?.defaultLocation ||
@@ -785,7 +785,7 @@ export const JobdeskView: React.FC = () => {
                             </span>
                             {item.note && (
                               <span
-                                className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current shrink-0"
+                                className="p-0.5 rounded bg-black/15 text-white shrink-0"
                                 title={`Ada catatan: ${item.note}`}
                               >
                                 <StickyNote className="w-3 h-3" aria-hidden="true" />
@@ -918,7 +918,7 @@ export const JobdeskView: React.FC = () => {
                         >
                           {assignment ? (
                             isOffShiftCode(assignment.shiftCode, shifts) ? (
-                              <div className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle(assignment.shiftCode).card}`}>
+                              <div className={`py-1.5 px-1.5 rounded-xl border-0 font-black text-[9px] tracking-wider uppercase text-center ${getShiftBadgeStyle(assignment.shiftCode).card}`}>
                                 <div>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</div>
                                 {assignment.note && (
                                   <div className="mt-1 flex items-center justify-center">
@@ -938,7 +938,7 @@ export const JobdeskView: React.FC = () => {
                                   <span className="font-mono font-black text-xs uppercase tracking-tight">
                                     {assignment.jobdeskCode}
                                   </span>
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-black/10 dark:bg-white/15 text-current">
+                                  <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold font-mono bg-black/10 dark:bg-white/15 text-current">
                                     {assignment.shiftCode}
                                   </span>
                                 </div>
@@ -968,7 +968,7 @@ export const JobdeskView: React.FC = () => {
                                 }`}
                                 title={`Shift: ${assignment.shiftCode}. Klik untuk alokasi Jobdesk`}
                               >
-                                <div className="font-mono font-black text-xs uppercase tracking-tight flex items-center justify-center gap-1">
+                                <div className="font-mono font-black text-[10px] uppercase tracking-tight flex items-center justify-center gap-1">
                                   <span>{assignment.shiftCode}</span>
                                   {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -984,7 +984,7 @@ export const JobdeskView: React.FC = () => {
                             )
                           ) : isSunday || hasHoliday ? (
                             <div
-                              className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center opacity-90 ${getShiftBadgeStyle('OFF').card}`}
+                              className={`py-1.5 px-1.5 rounded-xl border-0 font-black text-[9px] tracking-wider uppercase text-center opacity-90 ${getShiftBadgeStyle('OFF').card}`}
                               title={hasHoliday ? `Libur Nasional: ${holidays[day.iso]}` : 'Hari Minggu — Weekly Day Off otomatis'}
                             >
                               <div>WEEKLY DAY OFF</div>
@@ -1112,7 +1112,7 @@ export const JobdeskView: React.FC = () => {
                         >
                           {assignment ? (
                             isOffShiftCode(assignment.shiftCode, shifts) ? (
-                              <div className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center ${getShiftBadgeStyle(assignment.shiftCode).card}`}>
+                              <div className={`py-1.5 px-1.5 rounded-xl border-0 font-black text-[9px] tracking-wider uppercase text-center ${getShiftBadgeStyle(assignment.shiftCode).card}`}>
                                 <div>{assignment.shiftCode === 'OFF' ? 'WEEKLY DAY OFF' : assignment.shiftCode}</div>
                                 {assignment.note && (
                                   <div className="mt-1 flex items-center justify-center">
@@ -1132,7 +1132,7 @@ export const JobdeskView: React.FC = () => {
                                   <span className="font-mono font-black text-xs uppercase tracking-tight">
                                     {assignment.jobdeskCode}
                                   </span>
-                                  <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono bg-black/10 dark:bg-white/15 text-current">
+                                  <span className="px-1.5 py-0.5 rounded text-[8.5px] font-bold font-mono bg-black/10 dark:bg-white/15 text-current">
                                     {assignment.shiftCode}
                                   </span>
                                 </div>
@@ -1162,7 +1162,7 @@ export const JobdeskView: React.FC = () => {
                                 }`}
                                 title={`Shift: ${assignment.shiftCode}. Klik untuk alokasi Jobdesk`}
                               >
-                                <div className="font-mono font-black text-xs uppercase tracking-tight flex items-center justify-center gap-1">
+                                <div className="font-mono font-black text-[10px] uppercase tracking-tight flex items-center justify-center gap-1">
                                   <span>{assignment.shiftCode}</span>
                                   {assignment.note && (
                                     <span className="p-0.5 rounded bg-black/10 dark:bg-white/20 text-current" title={`Ada catatan: ${assignment.note}`}>
@@ -1178,7 +1178,7 @@ export const JobdeskView: React.FC = () => {
                             )
                           ) : isSunday || hasHoliday ? (
                             <div
-                              className={`py-2 px-1.5 rounded-xl border-0 font-black text-[10px] tracking-wider uppercase text-center opacity-90 ${getShiftBadgeStyle('OFF').card}`}
+                              className={`py-1.5 px-1.5 rounded-xl border-0 font-black text-[9px] tracking-wider uppercase text-center opacity-90 ${getShiftBadgeStyle('OFF').card}`}
                               title={hasHoliday ? `Libur Nasional: ${holidays[day.iso]}` : 'Hari Minggu — Weekly Day Off otomatis'}
                             >
                               <div>WEEKLY DAY OFF</div>
